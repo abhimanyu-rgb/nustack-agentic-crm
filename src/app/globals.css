@@ -2,17 +2,46 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Semantic theme tokens. Dark is the default (:root); .light overrides them.
+   Tailwind colors (canvas, panel, edge, ink, plus text) map to these vars, so
+   utility classes adapt automatically when the <html> class flips. */
 :root {
+  --canvas: #0a0e1a;
+  --panel: #111827;
+  --panel-soft: rgba(17, 24, 39, 0.7);
+  --edge: #1f2937;
+  --text: #e5e7eb;
+  --text-muted: #9ca3af;
+  --text-subtle: #6b7280;
   color-scheme: dark;
 }
 
+html.light {
+  --canvas: #f7f8fa;
+  --panel: #ffffff;
+  --panel-soft: rgba(255, 255, 255, 0.85);
+  --edge: #e2e8f0;
+  --text: #1e293b;
+  --text-muted: #64748b;
+  --text-subtle: #94a3b8;
+  color-scheme: light;
+}
+
 body {
-  background: #0a0e1a;
-  color: #e5e7eb;
+  background: var(--canvas);
+  color: var(--text);
 }
 
 /* thin scrollbars */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #374151 transparent;
+  scrollbar-color: var(--edge) transparent;
 }
+
+/* In light mode, soften the gray text utilities so they read on white.
+   These remap the most-used Tailwind grays to theme-aware values. */
+html.light .text-gray-400 { color: var(--text-muted); }
+html.light .text-gray-500 { color: var(--text-subtle); }
+html.light .text-gray-300 { color: #334155; }
+html.light .text-gray-200 { color: #1e293b; }
+html.light .text-gray-600 { color: #94a3b8; }

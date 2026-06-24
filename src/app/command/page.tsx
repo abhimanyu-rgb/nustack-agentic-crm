@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Card, SectionTitle, fmtMoney } from "@/components/ui";
+import { HintBanner, Info, SkeletonList } from "@/components/ux";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export default function CommandPage() {
@@ -16,17 +17,27 @@ export default function CommandPage() {
   }, []);
   if (forbidden)
     return (
-      <div className="rounded-xl border border-edge bg-panel/70 p-8 text-center">
+      <div className="rounded-xl border border-edge bg-panel p-8 text-center">
         <div className="text-lg font-medium">Access not allowed</div>
       </div>
     );
-  if (!data) return <div className="text-gray-500">Loading command center…</div>;
+  if (!data)
+    return (
+      <div>
+        <div className="mb-6 h-8 w-64 animate-pulse rounded bg-edge" />
+        <SkeletonList rows={5} />
+      </div>
+    );
 
   const { company, perAE, funnel } = data;
   const maxFunnelValue = Math.max(...funnel.map((f: any) => f.value), 1);
 
   return (
     <div>
+      <HintBanner id="command">
+        Company-wide view across all AEs. <strong>Click any number</strong> — revenue-at-risk, a funnel bar, or an AE&apos;s
+        at-risk cell — to drill into the matching deals.
+      </HintBanner>
       <div className="mb-6">
         <h1 className="text-2xl font-semibold">Command Center</h1>
         <p className="mt-1 text-sm text-gray-400">
@@ -104,7 +115,7 @@ export default function CommandPage() {
             </thead>
             <tbody>
               {perAE.map((ae: any) => (
-                <tr key={ae.id} className="border-b border-edge/50 last:border-0 hover:bg-edge/30">
+                <tr key={ae.id} className="border-b border-edge last:border-0 hover:bg-edge">
                   <td className="px-4 py-2.5 font-medium">
                     <Link href={`/deals?owner=${ae.id}`} className="text-indigo-300 hover:underline">{ae.name}</Link>
                   </td>

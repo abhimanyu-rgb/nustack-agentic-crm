@@ -71,7 +71,7 @@ export function Confidence({ value }: { value: number }) {
 }
 
 export function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return <div className={`rounded-xl border border-edge bg-panel/70 ${className}`}>{children}</div>;
+  return <div className={`rounded-xl border border-edge bg-panel ${className}`}>{children}</div>;
 }
 
 export function SectionTitle({ children, hint }: { children: React.ReactNode; hint?: string }) {

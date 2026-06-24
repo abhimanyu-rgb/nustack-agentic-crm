@@ -1,10 +1,11 @@
 "use client";
 
 import { use, useCallback, useEffect, useState } from "react";
-import Link from "next/link";
 import { Card, Confidence, ScoreChip, SectionTitle, buyingRoleLabel, fmtDate, fmtMoney } from "@/components/ui";
 import { ReasonPicker } from "@/components/ReasonPicker";
 import { TranscriptUploader } from "@/components/TranscriptUploader";
+import { BackButton } from "@/components/BackButton";
+import { HintBanner, Info, SkeletonList } from "@/components/ux";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export default function DealRoom({ params }: { params: Promise<{ id: string }> }) {
@@ -21,7 +22,13 @@ export default function DealRoom({ params }: { params: Promise<{ id: string }> }
 
   useEffect(load, [load]);
 
-  if (!d || d.error) return <div className="text-gray-500">Loading deal…</div>;
+  if (!d || d.error)
+    return (
+      <div>
+        <div className="mb-4 h-7 w-72 animate-pulse rounded bg-edge" />
+        <SkeletonList rows={4} />
+      </div>
+    );
   const { deal, signals, qualification, stakeholders, commitments, pendingProposal, escalatedProposal, audit, judgments } = d;
   const s = deal.scores;
 
@@ -39,9 +46,13 @@ export default function DealRoom({ params }: { params: Promise<{ id: string }> }
     <div className="grid gap-5 lg:grid-cols-3">
       {/* Header spans full width */}
       <div className="lg:col-span-3">
-        <Link href="/deals" className="text-xs text-gray-500 hover:text-gray-300">
-          ← Deals
-        </Link>
+        <BackButton fallback="/deals" label="Back" />
+        <div className="mt-2">
+          <HintBanner id="dealroom">
+            Paste a meeting transcript below to run the loop: <strong>extract signals → rescore → propose a stage move</strong>.
+            Click any score chip to see its drivers.
+          </HintBanner>
+        </div>
         <div className="mt-1 flex flex-wrap items-end justify-between gap-3">
           <div>
             <h1 className="text-2xl font-semibold">{deal.name}</h1>
@@ -179,7 +190,10 @@ export default function DealRoom({ params }: { params: Promise<{ id: string }> }
         </Card>
 
         <Card className="p-4">
-          <SectionTitle hint="MEDDPICC">Qualification</SectionTitle>
+          <SectionTitle hint="MEDDPICC">
+            Qualification
+            <Info tip="MEDDPICC: Metrics, Economic buyer, Decision criteria/process, Paper process, Identified pain, Champion, Competition. Each is scored from call evidence." />
+          </SectionTitle>
           <div className="space-y-1.5">
             {qualification.map((q: any) => (
               <div key={q.id} className="flex items-center justify-between text-sm">

@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Badge, Card, Confidence } from "./ui";
 import { ReasonPicker } from "./ReasonPicker";
+import { useToast } from "./ux";
 
 interface Evidence {
   id: string;
@@ -32,16 +33,24 @@ export function ActionCard({ data, onResolved }: { data: ActionCardData; onResol
   const [rejecting, setRejecting] = useState(false);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<string | null>(null);
+  const { toast } = useToast();
 
   async function resolve(decision: string, reasonCode?: string, note?: string) {
     setBusy(true);
-    await fetch(`/api/actions/${data.id}/resolve`, {
+    const res = await fetch(`/api/actions/${data.id}/resolve`, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ decision, reasonCode, note }),
     });
-    setDone(decision);
     setBusy(false);
+    if (!res.ok) {
+      const { error } = await res.json().catch(() => ({ error: "Something went wrong" }));
+      toast(error ?? "Could not resolve action", "error");
+      return;
+    }
+    setDone(decision);
+    const verb = decision === "APPROVED" ? "Approved" : decision === "REJECTED" ? "Rejected — saved as a learning signal" : "Dismissed";
+    toast(verb, decision === "REJECTED" ? "info" : "success");
     setTimeout(onResolved, 600);
   }
 

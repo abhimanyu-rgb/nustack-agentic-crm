@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { CommandBar } from "./CommandBar";
+import { ThemeToggle } from "./ThemeToggle";
 
 interface Me {
   me: { id: string; name: string; role: string };
@@ -30,7 +31,7 @@ export function Nav() {
   ];
 
   return (
-    <header className="border-b border-edge bg-panel/60 backdrop-blur">
+    <header className="border-b border-edge bg-panel backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3">
         <Link href="/" className="flex items-center gap-2">
           <span className="grid h-7 w-7 place-items-center rounded bg-indigo-500 text-sm font-bold text-white">N</span>
@@ -55,6 +56,7 @@ export function Nav() {
             );
           })}
           <CommandBar />
+          <ThemeToggle />
           {me && <UserSwitcher me={me} />}
           <ResetButton />
         </nav>

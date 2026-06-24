@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { ActionCard, type ActionCardData } from "@/components/ActionCard";
-import { Card, badgeLabel, fmtMoney } from "@/components/ui";
+import { badgeLabel, fmtMoney } from "@/components/ui";
+import { EmptyState, HintBanner, SkeletonList } from "@/components/ux";
 
 interface TodayData {
   queue: ActionCardData[];
@@ -22,13 +23,23 @@ export default function TodayPage() {
 
   useEffect(load, [load]);
 
-  if (!data) return <div className="text-gray-500">Loading queue…</div>;
+  if (!data)
+    return (
+      <div>
+        <div className="mb-6 h-8 w-64 animate-pulse rounded bg-edge" />
+        <SkeletonList rows={4} />
+      </div>
+    );
 
   const badges = ["All", ...Array.from(new Set(data.queue.map((q) => q.badge)))];
   const visible = filter === "All" ? data.queue : data.queue.filter((q) => q.badge === filter);
 
   return (
     <div>
+      <HintBanner id="today">
+        This is your <strong>action queue</strong>, not a dashboard. Each card is an AI recommendation with evidence.
+        Approve, reject (with a reason), or open the deal to inspect. Try the <strong>⌘K Ask bar</strong> to query your pipeline.
+      </HintBanner>
       <div className="mb-6">
         <h1 className="text-2xl font-semibold">Good morning, {data.header.user?.split(" ")[0]}</h1>
         <p className="mt-1 text-sm text-gray-400">
@@ -58,7 +69,7 @@ export default function TodayPage() {
       </div>
 
       {visible.length === 0 ? (
-        <Card className="p-8 text-center text-gray-500">Queue clear. Nice work. 🎉</Card>
+        <EmptyState icon="🎉" title="Queue clear" hint="No actions need your attention right now. New ones appear as deals change." />
       ) : (
         <div className="grid gap-3">
           {visible.map((a) => (

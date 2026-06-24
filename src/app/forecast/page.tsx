@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Card, SectionTitle, fmtMoney } from "@/components/ui";
+import { HintBanner, SkeletonList, useToast } from "@/components/ux";
 
 const CATEGORIES = ["PIPELINE", "BEST_CASE", "COMMIT", "OMITTED"];
 const REASONS = [
@@ -18,6 +19,7 @@ export default function ForecastPage() {
   const [data, setData] = useState<any>(null);
   const [forbidden, setForbidden] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const load = useCallback(() => {
     fetch("/api/forecast").then(async (r) => {
@@ -27,26 +29,41 @@ export default function ForecastPage() {
   }, []);
   useEffect(load, [load]);
 
+  const override = useCallback(
+    async (dealId: string, category: string, reasonCode: string) => {
+      const res = await fetch(`/api/forecast/${dealId}/override`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ category, reasonCode }),
+      });
+      setEditing(null);
+      if (res.ok) toast(`Forecast set to ${category}`, "success");
+      else toast("Could not override forecast", "error");
+      load();
+    },
+    [load, toast],
+  );
+
   if (forbidden)
     return (
-      <div className="rounded-xl border border-edge bg-panel/70 p-8 text-center">
+      <div className="rounded-xl border border-edge bg-panel p-8 text-center">
         <div className="text-lg font-medium">Access not allowed</div>
       </div>
     );
-  if (!data) return <div className="text-gray-500">Loading forecast…</div>;
-
-  async function override(dealId: string, category: string, reasonCode: string) {
-    await fetch(`/api/forecast/${dealId}/override`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ category, reasonCode }),
-    });
-    setEditing(null);
-    load();
-  }
+  if (!data)
+    return (
+      <div>
+        <div className="mb-6 h-8 w-56 animate-pulse rounded bg-edge" />
+        <SkeletonList rows={4} />
+      </div>
+    );
 
   return (
     <div>
+      <HintBanner id="forecast">
+        Every changed deal shows <strong>why</strong> it moved. Use <strong>Override</strong> to set a forecast category;
+        your reason is captured as a learning signal.
+      </HintBanner>
       <h1 className="mb-1 text-2xl font-semibold">Forecast Review</h1>
       <p className="mb-6 text-sm text-gray-400">Manager view · explainable, evidence-backed forecast</p>
 
@@ -74,7 +91,7 @@ export default function ForecastPage() {
           </thead>
           <tbody>
             {data.deals.map((d: any) => (
-              <tr key={d.id} className="border-b border-edge/50 last:border-0">
+              <tr key={d.id} className="border-b border-edge last:border-0">
                 <td className="px-4 py-2.5">
                   <Link href={`/deals/${d.id}`} className="hover:text-indigo-300">{d.name}</Link>
                   {d.recentlyChanged && <span className="ml-2 rounded bg-violet-500/20 px-1.5 py-0.5 text-[10px] text-violet-300">changed</span>}

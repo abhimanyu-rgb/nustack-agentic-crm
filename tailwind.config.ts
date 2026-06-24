@@ -5,13 +5,11 @@ export default {
   theme: {
     extend: {
       colors: {
-        ink: {
-          DEFAULT: "#0b1220",
-          soft: "#1a2438",
-        },
-        canvas: "#0a0e1a",
-        panel: "#111827",
-        edge: "#1f2937",
+        // Semantic tokens backed by CSS variables (see globals.css) so the same
+        // utility classes work in both light and dark themes.
+        canvas: "var(--canvas)",
+        panel: "var(--panel)",
+        edge: "var(--edge)",
       },
       fontFamily: {
         sans: ["ui-sans-serif", "system-ui", "-apple-system", "Segoe UI", "Roboto", "Helvetica", "Arial", "sans-serif"],

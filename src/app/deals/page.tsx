@@ -4,6 +4,8 @@ import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Card, ScoreChip, fmtMoney, fmtDate } from "@/components/ui";
+import { BackButton } from "@/components/BackButton";
+import { EmptyState, SkeletonList } from "@/components/ux";
 
 interface DealRow {
   id: string;
@@ -55,12 +57,8 @@ function DealsList() {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <div>
+          {hasFilter && <div className="mb-1"><BackButton fallback="/deals" /></div>}
           <h1 className="text-2xl font-semibold">{heading}</h1>
-          {meta.scope === "owner" && (
-            <Link href="/command" className="text-xs text-indigo-400 hover:underline">
-              ← back to Command
-            </Link>
-          )}
         </div>
         {hasFilter && (
           <Link href="/deals" className="rounded border border-edge px-3 py-1.5 text-xs text-gray-400 hover:bg-edge">
@@ -70,7 +68,11 @@ function DealsList() {
       </div>
 
       {open.length === 0 ? (
-        <Card className="p-8 text-center text-gray-500">No open deals in this view.</Card>
+        <EmptyState
+          icon="🗂"
+          title="No open deals here"
+          hint={hasFilter ? "Try clearing the filter to see all deals." : "Process a transcript in a deal to start the loop."}
+        />
       ) : (
         <div className="grid gap-3">
           {open.map((d) => (
@@ -115,7 +117,7 @@ function DealsList() {
 
 export default function DealsPage() {
   return (
-    <Suspense fallback={<div className="text-gray-500">Loading deals…</div>}>
+    <Suspense fallback={<SkeletonList rows={5} />}>
       <DealsList />
     </Suspense>
   );

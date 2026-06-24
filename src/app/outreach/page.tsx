@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Card, Confidence, SectionTitle } from "@/components/ui";
+import { EmptyState, HintBanner, SkeletonList, useToast } from "@/components/ux";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const TYPE_BADGE: Record<string, string> = {
@@ -16,23 +17,40 @@ const typeLabel = (t: string) => t.replace(/_/g, " ").toLowerCase();
 
 export default function OutreachPage() {
   const [data, setData] = useState<any>(null);
+  const { toast } = useToast();
   const load = useCallback(() => {
     fetch("/api/sdr").then((r) => r.json()).then(setData);
   }, []);
   useEffect(load, [load]);
-  if (!data) return <div className="text-gray-500">Loading outreach…</div>;
 
-  async function resolve(id: string, decision: "ACCEPTED" | "DISMISSED") {
-    await fetch(`/api/sdr/${id}/resolve`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ decision }),
-    });
-    load();
-  }
+  const resolve = useCallback(
+    async (id: string, decision: "ACCEPTED" | "DISMISSED") => {
+      const res = await fetch(`/api/sdr/${id}/resolve`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ decision }),
+      });
+      if (res.ok) toast(decision === "ACCEPTED" ? "Added to your worklist" : "Dismissed", decision === "ACCEPTED" ? "success" : "info");
+      else toast("Could not update suggestion", "error");
+      load();
+    },
+    [load, toast],
+  );
+
+  if (!data)
+    return (
+      <div>
+        <div className="mb-6 h-8 w-48 animate-pulse rounded bg-edge" />
+        <SkeletonList rows={4} />
+      </div>
+    );
 
   return (
     <div>
+      <HintBanner id="outreach">
+        These suggestions are learned from <strong>won and lost deals</strong> — not email opens. Accept to add an account
+        to your worklist, or dismiss to teach the model.
+      </HintBanner>
       <div className="mb-6">
         <h1 className="text-2xl font-semibold">Outreach</h1>
         <p className="mt-1 text-sm text-gray-400">
@@ -47,7 +65,7 @@ export default function OutreachPage() {
         <div className="lg:col-span-2">
           <SectionTitle hint={`${data.suggestions.length} suggestions`}>Recommended actions</SectionTitle>
           {data.suggestions.length === 0 ? (
-            <Card className="p-8 text-center text-gray-500">No open suggestions. 🎯</Card>
+            <EmptyState icon="🎯" title="All caught up" hint="No open outreach suggestions. New ones appear as deals close." />
           ) : (
             <div className="grid gap-3">
               {data.suggestions.map((s: any) => (
