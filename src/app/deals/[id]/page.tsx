@@ -2,7 +2,7 @@
 
 import { use, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Card, Confidence, ScoreChip, SectionTitle, fmtDate, fmtMoney } from "@/components/ui";
+import { Card, Confidence, ScoreChip, SectionTitle, buyingRoleLabel, fmtDate, fmtMoney } from "@/components/ui";
 import { ReasonPicker } from "@/components/ReasonPicker";
 import { TranscriptUploader } from "@/components/TranscriptUploader";
 
@@ -138,21 +138,21 @@ export default function DealRoom({ params }: { params: Promise<{ id: string }> }
         </Card>
       </div>
 
-      {/* Right column: buying group, qualification, commitments, audit */}
+      {/* Right column: buying committee (contacts), qualification, commitments, audit */}
       <div className="grid gap-5">
         <Card className="p-4">
-          <SectionTitle>Buying group</SectionTitle>
+          <SectionTitle hint="contacts & roles">Buying committee</SectionTitle>
           <div className="space-y-2">
             {stakeholders.map((st: any) => (
               <div key={st.id} className="rounded border border-edge p-2 text-sm">
                 <div className="flex items-center justify-between">
                   <span className="font-medium">{st.contactName}</span>
-                  <span className="text-[10px] uppercase tracking-wider text-indigo-300">{st.roleInDeal.replace(/_/g, " ")}</span>
+                  <span className="text-[10px] uppercase tracking-wider text-indigo-300">{buyingRoleLabel(st.roleInDeal)}</span>
                 </div>
                 <div className="text-xs text-gray-500">{st.contactTitle}</div>
                 <div className="mt-1 flex gap-2 text-[10px] text-gray-500">
-                  <span>infl {st.influenceLevel}</span>
-                  <span>· eng {st.engagementLevel}</span>
+                  <span>influence {st.influenceLevel}</span>
+                  <span>· engagement {st.engagementLevel}</span>
                   <span>· {st.sentiment.toLowerCase()}</span>
                 </div>
               </div>

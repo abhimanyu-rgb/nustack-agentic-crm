@@ -40,10 +40,17 @@ const badgeColors: Record<string, string> = {
   Stakeholder: "bg-teal-500/15 text-teal-300 border-teal-500/30",
 };
 
+// Display "Stakeholder" badge as "Contact" to match HubSpot vocabulary.
+const badgeLabels: Record<string, string> = { Stakeholder: "Contact" };
+
+export function badgeLabel(kind: string): string {
+  return badgeLabels[kind] ?? kind;
+}
+
 export function Badge({ kind }: { kind: string }) {
   return (
     <span className={`rounded border px-2 py-0.5 text-[11px] font-medium ${badgeColors[kind] ?? "bg-edge text-gray-300 border-edge"}`}>
-      {kind}
+      {badgeLabel(kind)}
     </span>
   );
 }
@@ -74,6 +81,24 @@ export function SectionTitle({ children, hint }: { children: React.ReactNode; hi
       {hint && <span className="text-xs text-gray-500">{hint}</span>}
     </div>
   );
+}
+
+// Buying roles displayed using HubSpot's "Buying role" vocabulary.
+// (Internal codes stay PRD/MEDDPICC; only the label shown to users changes.)
+const BUYING_ROLE_LABELS: Record<string, string> = {
+  ECONOMIC_BUYER: "Decision maker",
+  CHAMPION: "Champion",
+  BLOCKER: "Blocker",
+  TECHNICAL_BUYER: "Influencer", // technical evaluator
+  LEGAL: "Legal & compliance",
+  PROCUREMENT: "Budget holder",
+  INFLUENCER: "Influencer",
+  END_USER: "End user",
+  UNKNOWN: "Other",
+};
+
+export function buyingRoleLabel(code: string): string {
+  return BUYING_ROLE_LABELS[code] ?? code.replace(/_/g, " ").toLowerCase();
 }
 
 export const OVERRIDE_REASONS: { code: string; label: string }[] = [

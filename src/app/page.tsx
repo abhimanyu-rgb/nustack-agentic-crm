@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { ActionCard, type ActionCardData } from "@/components/ActionCard";
-import { Card, fmtMoney } from "@/components/ui";
+import { Card, badgeLabel, fmtMoney } from "@/components/ui";
 
 interface TodayData {
   queue: ActionCardData[];
@@ -45,7 +45,7 @@ export default function TodayPage() {
               filter === b ? "border-indigo-400 bg-indigo-500/20 text-indigo-200" : "border-edge text-gray-400 hover:text-gray-200"
             }`}
           >
-            {b}
+            {badgeLabel(b)}
           </button>
         ))}
       </div>
