@@ -347,9 +347,13 @@ export async function processTranscript(dealId: string, transcriptText: string):
 
 const MANAGER_ROLES = new Set(["SALES_MANAGER", "REVOPS", "ADMIN"]);
 
+// A proposal can only be acted on while awaiting a decision.
+const OPEN_PROPOSAL_STATUSES = new Set(["PENDING_APPROVAL", "PENDING_MANAGER_APPROVAL"]);
+
 export function approveStageProposal(proposalId: string, userId: string, note?: string) {
   const p = db.stageProposals.find((x) => x.id === proposalId);
   if (!p) throw new Error("proposal not found");
+  if (!OPEN_PROPOSAL_STATUSES.has(p.status)) throw new Error(`proposal already resolved (${p.status})`);
   const deal = getDeal(p.dealId)!;
   const targetStage = getStage(p.proposedStageId);
   const approver = getUser(userId);
@@ -399,6 +403,7 @@ export function approveStageProposal(proposalId: string, userId: string, note?: 
 export function rejectStageProposal(proposalId: string, userId: string, reasonCode: OverrideReasonCode, note?: string) {
   const p = db.stageProposals.find((x) => x.id === proposalId);
   if (!p) throw new Error("proposal not found");
+  if (!OPEN_PROPOSAL_STATUSES.has(p.status)) throw new Error(`proposal already resolved (${p.status})`);
   p.status = "REJECTED";
   p.resolvedAt = now();
   p.resolvedByUserId = userId;
@@ -420,6 +425,7 @@ export function rejectStageProposal(proposalId: string, userId: string, reasonCo
 export function resolveAction(actionId: string, userId: string, decision: "APPROVED" | "REJECTED" | "DISMISSED", reasonCode?: OverrideReasonCode, note?: string) {
   const a = db.actions.find((x) => x.id === actionId);
   if (!a) throw new Error("action not found");
+  if (a.status !== "PENDING") throw new Error(`action already resolved (${a.status})`);
   // Stage actions defer to the proposal flow.
   if (a.stageProposalId && decision === "APPROVED") return approveStageProposal(a.stageProposalId, userId, note);
   if (a.stageProposalId && decision === "REJECTED") return rejectStageProposal(a.stageProposalId, userId, reasonCode ?? "OTHER", note);
@@ -461,6 +467,7 @@ export function resetDB(): void {
 export function resolveOutreachSuggestion(id: string, decision: "ACCEPTED" | "DISMISSED", userId: string) {
   const s = db.outreachSuggestions.find((x) => x.id === id);
   if (!s) throw new Error("suggestion not found");
+  if (s.status !== "PENDING") throw new Error(`suggestion already resolved (${s.status})`);
   s.status = decision;
   // If accepting a target-account suggestion, mark that account as being worked.
   if (decision === "ACCEPTED" && s.targetAccountId) {
