@@ -36,9 +36,9 @@ export default function CommandPage() {
 
       {/* Company rollup KPIs */}
       <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-5">
-        <Kpi label="Total pipeline" value={fmtMoney(company.totalPipeline)} />
-        <Kpi label="Commit" value={fmtMoney(company.commitValue)} accent="violet" />
-        <Kpi label="Revenue at risk" value={fmtMoney(company.atRiskValue)} accent="rose" />
+        <Kpi label="Total pipeline" value={fmtMoney(company.totalPipeline)} href="/deals" />
+        <Kpi label="Commit" value={fmtMoney(company.commitValue)} accent="violet" href="/deals?forecast=COMMIT" />
+        <Kpi label="Revenue at risk" value={fmtMoney(company.atRiskValue)} accent="rose" href="/deals?risk=high" />
         <Kpi label="Avg forecast confidence" value={`${company.companyConfidence}`} suffix="/100" accent={company.companyConfidence >= 60 ? "emerald" : "amber"} />
         <Kpi label="Avg risk" value={`${company.companyRisk}`} suffix="/100" accent={company.companyRisk >= 60 ? "rose" : "amber"} />
       </div>
@@ -49,11 +49,11 @@ export default function CommandPage() {
           <SectionTitle hint="open deals by stage">Pipeline flow</SectionTitle>
           <div className="space-y-2">
             {funnel.map((f: any) => (
-              <div key={f.stageId} className="flex items-center gap-3">
-                <div className="w-32 shrink-0 truncate text-sm text-gray-300">{f.stageName}</div>
+              <Link key={f.stageId} href={`/deals?stage=${f.stageId}`} className="flex items-center gap-3 group">
+                <div className="w-32 shrink-0 truncate text-sm text-gray-300 group-hover:text-white">{f.stageName}</div>
                 <div className="relative h-7 flex-1 overflow-hidden rounded bg-canvas">
                   <div
-                    className="absolute inset-y-0 left-0 rounded bg-indigo-500/40"
+                    className="absolute inset-y-0 left-0 rounded bg-indigo-500/40 group-hover:bg-indigo-500/60"
                     style={{ width: `${(f.value / maxFunnelValue) * 100}%` }}
                   />
                   <div className="absolute inset-0 flex items-center justify-between px-2 text-xs">
@@ -64,7 +64,7 @@ export default function CommandPage() {
                 <div className="w-24 shrink-0 text-right text-[11px] text-gray-500">
                   conf {f.avgConfidence} · <span className={f.avgRisk >= 60 ? "text-rose-300" : ""}>risk {f.avgRisk}</span>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         </Card>
@@ -73,10 +73,10 @@ export default function CommandPage() {
         <Card className="p-4">
           <SectionTitle hint="open deals">Forecast confidence</SectionTitle>
           <ConfBar label="High (67+)" count={company.confidenceBuckets.high} total={company.openCount} color="bg-emerald-400" />
-          <ConfBar label="Medium (34–66)" count={company.confidenceBuckets.medium} total={company.openCount} color="bg-amber-400" />
+          <ConfBar label="Medium (34 to 66)" count={company.confidenceBuckets.medium} total={company.openCount} color="bg-amber-400" />
           <ConfBar label="Low (<34)" count={company.confidenceBuckets.low} total={company.openCount} color="bg-rose-400" />
           <p className="mt-3 text-xs text-gray-500">
-            Confidence is the agent&apos;s defensibility of each deal&apos;s forecast — backed by signals, not sentiment.
+            Confidence is the agent&apos;s defensibility of each deal&apos;s forecast, backed by signals, not sentiment.
           </p>
         </Card>
       </div>
@@ -115,12 +115,14 @@ export default function CommandPage() {
                   <td className="px-4 py-2.5"><Pill value={ae.avgRisk} good={ae.avgRisk < 50} invert /></td>
                   <td className="px-4 py-2.5 tabular-nums">
                     {ae.atRiskCount > 0 ? (
-                      <span className="text-rose-300">{ae.atRiskCount} · {fmtMoney(ae.atRiskValue)}</span>
+                      <Link href={`/deals?owner=${ae.id}&risk=high`} className="text-rose-300 hover:underline">
+                        {ae.atRiskCount} · {fmtMoney(ae.atRiskValue)}
+                      </Link>
                     ) : (
-                      <span className="text-gray-600">—</span>
+                      <span className="text-gray-600">-</span>
                     )}
                   </td>
-                  <td className="px-4 py-2.5 tabular-nums text-gray-400">{ae.wonCount + ae.lostCount ? `${ae.winRate}%` : "—"}</td>
+                  <td className="px-4 py-2.5 tabular-nums text-gray-400">{ae.wonCount + ae.lostCount ? `${ae.winRate}%` : "-"}</td>
                   <td className="px-4 py-2.5 tabular-nums text-gray-400">{ae.overrideCount}</td>
                   <td className="px-4 py-2.5 tabular-nums text-gray-400">{ae.pendingActions}</td>
                 </tr>
@@ -138,11 +140,11 @@ export default function CommandPage() {
   );
 }
 
-function Kpi({ label, value, suffix, accent }: { label: string; value: string; suffix?: string; accent?: string }) {
+function Kpi({ label, value, suffix, accent, href }: { label: string; value: string; suffix?: string; accent?: string; href?: string }) {
   const color =
     accent === "violet" ? "text-violet-300" : accent === "rose" ? "text-rose-300" : accent === "emerald" ? "text-emerald-300" : accent === "amber" ? "text-amber-300" : "";
-  return (
-    <Card className={`p-4 ${accent === "violet" ? "border-violet-500/40" : accent === "rose" ? "border-rose-500/30" : ""}`}>
+  const inner = (
+    <Card className={`p-4 ${href ? "transition hover:border-gray-600" : ""} ${accent === "violet" ? "border-violet-500/40" : accent === "rose" ? "border-rose-500/30" : ""}`}>
       <div className="text-[10px] uppercase tracking-wider text-gray-500">{label}</div>
       <div className={`text-xl font-semibold tabular-nums ${color}`}>
         {value}
@@ -150,6 +152,7 @@ function Kpi({ label, value, suffix, accent }: { label: string; value: string; s
       </div>
     </Card>
   );
+  return href ? <Link href={href}>{inner}</Link> : inner;
 }
 
 function ConfBar({ label, count, total, color }: { label: string; count: number; total: number; color: string }) {

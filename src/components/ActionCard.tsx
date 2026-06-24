@@ -49,7 +49,7 @@ export function ActionCard({ data, onResolved }: { data: ActionCardData; onResol
     return (
       <Card className="p-4 opacity-60">
         <div className="text-sm text-gray-400">
-          {done === "APPROVED" ? "✓ Approved" : done === "REJECTED" ? "✕ Rejected — learning event logged" : "Dismissed"} ·{" "}
+          {done === "APPROVED" ? "✓ Approved" : done === "REJECTED" ? "✕ Rejected (learning event logged)" : "Dismissed"} ·{" "}
           <span className="text-gray-500">{data.title}</span>
         </div>
       </Card>

@@ -101,7 +101,7 @@ export function runOutreachOptimization(ctx: OutreachContext): OutreachSuggestio
         82,
         {
           targetAccountId: t.id,
-          draftMessage: `Hi — saw ${t.name}'s recent ${t.triggerEvents[0]?.toLowerCase()}. Teams scaling this fast usually feel forecast accuracy slip as new reps ramp. We helped similar teams keep forecast hygiene through hiring — worth a quick look?`,
+          draftMessage: `Hi, saw ${t.name}'s recent ${t.triggerEvents[0]?.toLowerCase()}. Teams scaling this fast usually feel forecast accuracy slip as new reps ramp. We helped similar teams keep forecast hygiene through hiring. Worth a quick look?`,
         },
       ),
     );
@@ -112,7 +112,7 @@ export function runOutreachOptimization(ctx: OutreachContext): OutreachSuggestio
     base(
       "PERSONA",
       "Lead with the RevOps / Sales Ops persona",
-      "In closed-won deals, momentum came once a RevOps/Sales-Ops owner engaged — not from the first VP touch. Open multi-threaded with that persona.",
+      "In closed-won deals, momentum came once a RevOps/Sales-Ops owner engaged, not from the first VP touch. Open multi-threaded with that persona.",
       wonNames.map((n) => `Won: ${n}`),
       0.74,
       68,

@@ -62,7 +62,7 @@ export function TranscriptUploader({ dealId, onProcessed }: { dealId: string; on
           {result.proposal && (
             <div className="mt-2 text-indigo-300">New stage proposal: {result.proposal.rationale}</div>
           )}
-          <div className="mt-1 text-gray-500">Scores recalculated — see panel above.</div>
+          <div className="mt-1 text-gray-500">Scores recalculated. See panel above.</div>
         </div>
       )}
     </div>

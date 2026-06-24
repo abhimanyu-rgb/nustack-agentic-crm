@@ -11,6 +11,7 @@ export default function DealRoom({ params }: { params: Promise<{ id: string }> }
   const { id } = use(params);
   const [d, setD] = useState<any>(null);
   const [rejecting, setRejecting] = useState(false);
+  const [openScore, setOpenScore] = useState<string | null>(null);
 
   const load = useCallback(() => {
     fetch(`/api/deals/${id}`)
@@ -57,20 +58,24 @@ export default function DealRoom({ params }: { params: Promise<{ id: string }> }
         <Card className="p-4">
           <SectionTitle hint="click a score for drivers">Deal scores</SectionTitle>
           <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
-            <ScoreChip label="Health" value={s.dealHealth} />
-            <ScoreChip label="Risk" value={s.risk} invert />
-            <ScoreChip label="Momentum" value={s.momentum} />
-            <ScoreChip label="Readiness" value={s.stageReadiness} />
-            <ScoreChip label="Forecast" value={s.forecastConfidence} />
+            <ScoreChip label="Health" value={s.dealHealth} onClick={() => setOpenScore(openScore === "DEAL_HEALTH" ? null : "DEAL_HEALTH")} />
+            <ScoreChip label="Risk" value={s.risk} invert onClick={() => setOpenScore(openScore === "RISK" ? null : "RISK")} />
+            <ScoreChip label="Momentum" value={s.momentum} onClick={() => setOpenScore(openScore === "MOMENTUM" ? null : "MOMENTUM")} />
+            <ScoreChip label="Readiness" value={s.stageReadiness} onClick={() => setOpenScore(openScore === "STAGE_READINESS" ? null : "STAGE_READINESS")} />
+            <ScoreChip label="Forecast" value={s.forecastConfidence} onClick={() => setOpenScore(openScore === "FORECAST_CONFIDENCE" ? null : "FORECAST_CONFIDENCE")} />
             <ScoreChip label="Champion" value={s.championStrength} />
           </div>
-          {judgments.length > 0 && (
+
+          {/* Explanation drawer for the selected score (PRD 15.3 Explanation Drawer) */}
+          {openScore && <ScoreDrawer judgments={judgments} type={openScore} onClose={() => setOpenScore(null)} />}
+
+          {judgments.length > 0 && !openScore && (
             <div className="mt-3 space-y-1 border-t border-edge pt-3 text-xs text-gray-400">
               {judgments.slice(-5).map((j: any) => (
                 <div key={j.id} className="flex items-center justify-between">
                   <span>{j.judgmentType.replace(/_/g, " ").toLowerCase()}</span>
                   <span className={j.direction === "INCREASED" ? "text-emerald-300" : j.direction === "DECREASED" ? "text-rose-300" : "text-gray-500"}>
-                    {j.score} {j.changeSinceLast > 0 ? `▲${j.changeSinceLast}` : j.changeSinceLast < 0 ? `▼${Math.abs(j.changeSinceLast)}` : "—"}
+                    {j.score} {j.changeSinceLast > 0 ? `▲${j.changeSinceLast}` : j.changeSinceLast < 0 ? `▼${Math.abs(j.changeSinceLast)}` : "-"}
                   </span>
                 </div>
               ))}
@@ -92,11 +97,11 @@ export default function DealRoom({ params }: { params: Promise<{ id: string }> }
             <div className="mt-3 grid grid-cols-2 gap-3 text-xs">
               <div>
                 <div className="mb-1 font-medium text-emerald-300">Evidence met</div>
-                {pendingProposal.requiredEvidenceMet.length ? pendingProposal.requiredEvidenceMet.map((e: string) => <div key={e} className="text-gray-400">✓ {e}</div>) : <div className="text-gray-600">—</div>}
+                {pendingProposal.requiredEvidenceMet.length ? pendingProposal.requiredEvidenceMet.map((e: string) => <div key={e} className="text-gray-400">✓ {e}</div>) : <div className="text-gray-600">-</div>}
               </div>
               <div>
                 <div className="mb-1 font-medium text-amber-300">Missing evidence</div>
-                {pendingProposal.missingEvidence.length ? pendingProposal.missingEvidence.map((e: string) => <div key={e} className="text-gray-400">○ {e}</div>) : <div className="text-gray-600">—</div>}
+                {pendingProposal.missingEvidence.length ? pendingProposal.missingEvidence.map((e: string) => <div key={e} className="text-gray-400">○ {e}</div>) : <div className="text-gray-600">-</div>}
               </div>
             </div>
             {!rejecting ? (
@@ -120,7 +125,7 @@ export default function DealRoom({ params }: { params: Promise<{ id: string }> }
             <div className="flex items-center gap-2 text-sm text-amber-300">
               <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] uppercase tracking-wider">Awaiting manager</span>
               <span>
-                Move to <span className="font-medium">{escalatedProposal.proposedStageName}</span> endorsed — pending manager sign-off.
+                Move to <span className="font-medium">{escalatedProposal.proposedStageName}</span> endorsed, pending manager sign-off.
               </span>
             </div>
             <p className="mt-1 text-xs text-gray-500">{escalatedProposal.proposedStageName} requires manager approval before the deal advances.</p>
@@ -218,6 +223,42 @@ export default function DealRoom({ params }: { params: Promise<{ id: string }> }
           </div>
         </Card>
       </div>
+    </div>
+  );
+}
+
+// Explanation drawer: shows the latest judgment's positive/negative drivers for
+// a score type. Empty for seeded deals until a transcript triggers a rescore.
+function ScoreDrawer({ judgments, type, onClose }: { judgments: any[]; type: string; onClose: () => void }) {
+  const j = [...judgments].reverse().find((x) => x.judgmentType === type);
+  const label = type.replace(/_/g, " ").toLowerCase();
+  return (
+    <div className="mt-3 rounded-lg border border-indigo-500/30 bg-indigo-500/5 p-3">
+      <div className="mb-2 flex items-center justify-between">
+        <span className="text-xs font-medium text-indigo-300">Why {label} is {j ? j.score : "this"}</span>
+        <button onClick={onClose} className="text-xs text-gray-500 hover:text-gray-300">close</button>
+      </div>
+      {!j ? (
+        <p className="text-xs text-gray-500">
+          No scoring run recorded yet for this deal. Process a transcript below to generate driver-level evidence.
+        </p>
+      ) : (
+        <div className="grid grid-cols-2 gap-3 text-xs">
+          <div>
+            <div className="mb-1 font-medium text-emerald-300">Positive drivers</div>
+            {j.positiveFactors.length ? j.positiveFactors.map((f: any, i: number) => (
+              <div key={i} className="flex justify-between text-gray-400"><span>{f.description}</span><span className="tabular-nums text-emerald-300">+{f.weight}</span></div>
+            )) : <div className="text-gray-600">None</div>}
+          </div>
+          <div>
+            <div className="mb-1 font-medium text-rose-300">Negative drivers</div>
+            {j.negativeFactors.length ? j.negativeFactors.map((f: any, i: number) => (
+              <div key={i} className="flex justify-between text-gray-400"><span>{f.description}</span><span className="tabular-nums text-rose-300">{f.weight}</span></div>
+            )) : <div className="text-gray-600">None</div>}
+          </div>
+        </div>
+      )}
+      {j && <div className="mt-2 border-t border-edge pt-2 text-[11px] text-gray-500">{j.rationale} · model {j.modelVersion}</div>}
     </div>
   );
 }

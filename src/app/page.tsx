@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { ActionCard, type ActionCardData } from "@/components/ActionCard";
 import { Card, badgeLabel, fmtMoney } from "@/components/ui";
 
@@ -32,7 +33,13 @@ export default function TodayPage() {
         <h1 className="text-2xl font-semibold">Good morning, {data.header.user?.split(" ")[0]}</h1>
         <p className="mt-1 text-sm text-gray-400">
           {data.header.queueCount} action{data.header.queueCount === 1 ? "" : "s"} ready ·{" "}
-          <span className="text-rose-300">{fmtMoney(data.header.revenueAtRisk)} revenue at risk</span>
+          {data.header.revenueAtRisk > 0 ? (
+            <Link href="/deals?risk=high" className="text-rose-300 hover:underline">
+              {fmtMoney(data.header.revenueAtRisk)} revenue at risk
+            </Link>
+          ) : (
+            <span className="text-gray-500">no deals at risk</span>
+          )}
         </p>
       </div>
 

@@ -326,7 +326,7 @@ export async function processTranscript(dealId: string, transcriptText: string):
     action = {
       id: nextId("act"), workspaceId: db.workspace.id, dealId, accountId: deal.accountId,
       assignedToUserId: deal.ownerId, actionType: "UPDATE_STAGE",
-      title: `Approve stage move: ${deal.name.split(" — ")[0]} → ${getStage(draft.proposedStageId)?.name}`,
+      title: `Approve stage move: ${deal.name.split(": ")[0]} → ${getStage(draft.proposedStageId)?.name}`,
       description: draft.rationale, confidence: draft.confidence,
       priorityScore: Math.round(draft.confidence * 100), businessRiskLevel: businessRisk, autonomyMode: mode,
       sourceSignalIds: draft.sourceSignalIds, rationale: draft.rationale,
@@ -368,7 +368,7 @@ export function approveStageProposal(proposalId: string, userId: string, note?: 
       db.actions.push({
         id: nextId("act"), workspaceId: db.workspace.id, dealId: deal.id, accountId: deal.accountId,
         assignedToUserId: manager, actionType: "UPDATE_STAGE",
-        title: `Approve stage move: ${deal.name.split(" — ")[0]} → ${targetStage.name} (rep-endorsed)`,
+        title: `Approve stage move: ${deal.name.split(": ")[0]} → ${targetStage.name} (rep-endorsed)`,
         description: `${getUser(userId)?.name ?? "AE"} endorsed this move into a manager-gated stage. ${p.rationale}`,
         confidence: p.confidence, priorityScore: Math.round(p.confidence * 100) + 5,
         businessRiskLevel: "HIGH", autonomyMode: "QUEUE_FOR_APPROVAL",

@@ -38,7 +38,7 @@ export default function OutreachPage() {
         <p className="mt-1 text-sm text-gray-400">
           Targeting &amp; messaging learned from{" "}
           <span className="text-emerald-300">{data.learnedFrom.wonCount} won</span> and{" "}
-          <span className="text-rose-300">{data.learnedFrom.lostCount} lost</span> deals — optimized for qualified pipeline, not opens.
+          <span className="text-rose-300">{data.learnedFrom.lostCount} lost</span> deals, optimized for qualified pipeline, not opens.
         </p>
       </div>
 

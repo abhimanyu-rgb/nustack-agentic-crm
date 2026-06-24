@@ -20,28 +20,36 @@ interface DealRow {
 function DealsList() {
   const params = useSearchParams();
   const owner = params.get("owner");
+  const risk = params.get("risk");
+  const stage = params.get("stage");
+  const forecast = params.get("forecast");
   const [deals, setDeals] = useState<DealRow[]>([]);
-  const [meta, setMeta] = useState<{ scope: string; ownerName?: string }>({ scope: "self" });
+  const [meta, setMeta] = useState<{ scope: string; ownerName?: string; filterLabel?: string }>({ scope: "self" });
+
+  const hasFilter = Boolean(owner || risk || stage || forecast);
 
   useEffect(() => {
-    const qs = owner ? `?owner=${owner}` : "";
-    fetch(`/api/deals${qs}`)
+    const q = new URLSearchParams();
+    if (owner) q.set("owner", owner);
+    if (risk) q.set("risk", risk);
+    if (stage) q.set("stage", stage);
+    if (forecast) q.set("forecast", forecast);
+    const qs = q.toString();
+    fetch(`/api/deals${qs ? `?${qs}` : ""}`)
       .then((r) => r.json())
       .then((d) => {
         setDeals(d.deals);
-        setMeta({ scope: d.scope, ownerName: d.ownerName });
+        setMeta({ scope: d.scope, ownerName: d.ownerName, filterLabel: d.filterLabel });
       });
-  }, [owner]);
+  }, [owner, risk, stage, forecast]);
 
   const open = deals.filter((d) => d.status === "OPEN");
   const closed = deals.filter((d) => d.status !== "OPEN");
 
-  const heading =
-    meta.scope === "owner" && meta.ownerName
-      ? `${meta.ownerName}'s deals`
-      : meta.scope === "self"
-        ? "My deals"
-        : "All deals";
+  // Build a heading from owner scope + any active filter.
+  const whose =
+    meta.scope === "owner" && meta.ownerName ? `${meta.ownerName}'s` : meta.scope === "self" ? "My" : "All";
+  const heading = meta.filterLabel ? `${whose} deals · ${meta.filterLabel}` : `${whose} deals`;
 
   return (
     <div>
@@ -54,7 +62,7 @@ function DealsList() {
             </Link>
           )}
         </div>
-        {meta.scope === "owner" && (
+        {hasFilter && (
           <Link href="/deals" className="rounded border border-edge px-3 py-1.5 text-xs text-gray-400 hover:bg-edge">
             Clear filter
           </Link>

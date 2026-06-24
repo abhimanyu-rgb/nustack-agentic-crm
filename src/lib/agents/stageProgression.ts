@@ -96,7 +96,7 @@ export function proposeStage(ctx: StageContext): StageProposalDraft {
 
   const rationaleParts = [`Move to ${nextStage.name} because`];
   if (met.length) rationaleParts.push(met.slice(0, 3).join(", ").toLowerCase() + ".");
-  if (blocker) rationaleParts.push(`Note: unresolved risk — ${blocker.title}.`);
+  if (blocker) rationaleParts.push(`Note: unresolved risk, ${blocker.title}.`);
   if (missing.length) rationaleParts.push(`Remaining gap: ${missing.join(", ").toLowerCase()}.`);
 
   return {
