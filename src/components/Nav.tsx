@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { CommandBar } from "./CommandBar";
 
 interface Me {
   me: { id: string; name: string; role: string };
@@ -53,6 +54,7 @@ export function Nav() {
               </Link>
             );
           })}
+          <CommandBar />
           {me && <UserSwitcher me={me} />}
           <ResetButton />
         </nav>
