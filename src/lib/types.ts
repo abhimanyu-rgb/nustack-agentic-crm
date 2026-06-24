@@ -80,6 +80,7 @@ export type ProposalType = "ADVANCE" | "REGRESS" | "NO_CHANGE" | "CLOSE_WON" | "
 
 export type ProposalStatus =
   | "PENDING_APPROVAL"
+  | "PENDING_MANAGER_APPROVAL"
   | "AUTO_APPLIED"
   | "APPROVED"
   | "REJECTED"
@@ -462,6 +463,46 @@ export interface LearningEvent {
   sourceObjectId: ID;
   tenantVisible: boolean;
   eligibleForCrossTenantLearning: boolean;
+  createdAt: string;
+}
+
+// SDR / Outreach Optimization (PRD 07.12, 09.2 SDR queue).
+export interface TargetAccount {
+  id: ID;
+  workspaceId: ID;
+  name: string;
+  domain: string;
+  industry: string;
+  employeeCount: number;
+  icpFitScore: number; // 0-100
+  marketSignalScore: number; // 0-100, strength of recent triggers
+  triggerEvents: string[]; // e.g. "Series C funding", "20 sales roles open"
+  matchedWonPattern?: string; // which closed-won pattern this resembles
+  status: "NEW" | "WORKING" | "QUALIFIED" | "DISMISSED";
+}
+
+export type OutreachSuggestionType =
+  | "TARGET_ACCOUNT"
+  | "PERSONA"
+  | "MESSAGE_ANGLE"
+  | "ICP_REFINEMENT"
+  | "TRIGGER_OUTREACH"
+  | "FOLLOW_UP_TIMING";
+
+export interface OutreachSuggestion {
+  id: ID;
+  workspaceId: ID;
+  assignedToUserId: ID;
+  type: OutreachSuggestionType;
+  title: string;
+  rationale: string; // grounded in won/lost patterns — never opens/replies alone
+  evidence: string[]; // closed-won deals / signals this is learned from
+  targetAccountId?: ID;
+  draftMessage?: string;
+  confidence: number;
+  priorityScore: number;
+  status: "PENDING" | "ACCEPTED" | "DISMISSED";
+  createdByAgent: string;
   createdAt: string;
 }
 

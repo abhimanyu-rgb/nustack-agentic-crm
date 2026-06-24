@@ -16,6 +16,7 @@ import type {
   Signal,
   Stakeholder,
   StageProposal,
+  TargetAccount,
   User,
   Workspace,
 } from "./types";
@@ -55,6 +56,7 @@ export const users: User[] = [
   { id: "user_ae2", workspaceId: WS, name: "Diego Alvarez", email: "diego@northwind.example", role: "AE", managerId: "user_mgr", status: "ACTIVE" },
   { id: "user_ae3", workspaceId: WS, name: "Nina Kapoor", email: "nina@northwind.example", role: "AE", managerId: "user_mgr", status: "ACTIVE" },
   { id: "user_ae4", workspaceId: WS, name: "Tom Becker", email: "tom@northwind.example", role: "AE", managerId: "user_mgr", status: "ACTIVE" },
+  { id: "user_sdr", workspaceId: WS, name: "Jordan Vance", email: "jordan@northwind.example", role: "SDR", managerId: "user_mgr", status: "ACTIVE" },
   { id: "user_mgr", workspaceId: WS, name: "Marcus Reyes", email: "marcus@northwind.example", role: "SALES_MANAGER", status: "ACTIVE" },
   { id: "user_revops", workspaceId: WS, name: "Priya Nair", email: "priya@northwind.example", role: "REVOPS", status: "ACTIVE" },
   { id: "user_admin", workspaceId: WS, name: "Alex Morgan", email: "alex@northwind.example", role: "ADMIN", status: "ACTIVE" },
@@ -184,4 +186,14 @@ export const overrides: Override[] = [
   { id: "ov_0001", workspaceId: WS, dealId: "deal_globex", userId: "user_ae", targetObjectType: "STAGE_PROPOSAL", targetObjectId: "sp_globex_prev", originalAgentValue: "ADVANCE to Business Case", userCorrectedValue: "NO_CHANGE", overrideReasonCode: "WEAK_NEXT_STEP", overrideReasonNote: "No real ROI proof yet.", sourceContext: "Deal Room", createdAt: "2026-06-05T00:00:00Z", learningEventId: "le_0001" },
   { id: "ov_0002", workspaceId: WS, dealId: "deal_umbrella", userId: "user_ae", targetObjectType: "MARKET_SIGNAL", targetObjectId: "sig_old_market", originalAgentValue: "Relevant: leadership change", userCorrectedValue: "Dismissed", overrideReasonCode: "OUTSIDE_SIGNAL_IRRELEVANT", sourceContext: "Today Queue", createdAt: "2026-06-03T00:00:00Z", learningEventId: "le_0002" },
   { id: "ov_0003", workspaceId: WS, dealId: "deal_bright", userId: "user_mgr", targetObjectType: "FORECAST", targetObjectId: "deal_bright", originalAgentValue: "BEST_CASE", userCorrectedValue: "PIPELINE", overrideReasonCode: "NO_BUDGET_CONFIRMATION", overrideReasonNote: "Too early to forecast.", sourceContext: "Forecast Review", createdAt: "2026-06-16T00:00:00Z", learningEventId: "le_0003" },
+];
+
+// SDR target accounts (PRD 09.2 SDR queue). Some carry funding/hiring triggers
+// so the Outreach Optimization agent can connect them to won patterns.
+export const targetAccounts: TargetAccount[] = [
+  { id: "tgt_nimbus", workspaceId: WS, name: "Nimbus Cloud", domain: "nimbus.example", industry: "SaaS", employeeCount: 380, icpFitScore: 88, marketSignalScore: 90, triggerEvents: ["Series C funding ($65M)", "18 sales roles open"], matchedWonPattern: "BrightCo — Pilot (Won)", status: "NEW" },
+  { id: "tgt_vertex", workspaceId: WS, name: "Vertex Financial", domain: "vertex.example", industry: "FinTech", employeeCount: 240, icpFitScore: 84, marketSignalScore: 72, triggerEvents: ["New VP of RevOps hired"], matchedWonPattern: "Initech — Seat Expansion (Won)", status: "NEW" },
+  { id: "tgt_solis", workspaceId: WS, name: "Solis Health", domain: "solis.example", industry: "Healthcare", employeeCount: 1100, icpFitScore: 61, marketSignalScore: 40, triggerEvents: ["Expanding commercial team"], status: "NEW" },
+  { id: "tgt_atlas", workspaceId: WS, name: "Atlas Robotics", domain: "atlas.example", industry: "SaaS", employeeCount: 520, icpFitScore: 79, marketSignalScore: 81, triggerEvents: ["Hiring spike: 25 GTM roles", "Doubled pipeline target"], matchedWonPattern: "BrightCo — Pilot (Won)", status: "NEW" },
+  { id: "tgt_orbit", workspaceId: WS, name: "Orbit Logistics", domain: "orbit.example", industry: "Logistics", employeeCount: 90, icpFitScore: 48, marketSignalScore: 30, triggerEvents: [], status: "NEW" },
 ];

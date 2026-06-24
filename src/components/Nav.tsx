@@ -18,10 +18,13 @@ export function Nav() {
     fetch("/api/me").then((r) => r.json()).then(setMe);
   }, [path]);
 
-  // Command + Forecast are leadership surfaces — only show to all-team roles.
+  const role = me?.me.role;
+  const isSdr = role === "SDR";
+  // SDRs work the Outreach surface, not the AE deal queue.
+  // Command + Forecast are leadership surfaces — only for all-team roles.
   const links = [
-    { href: "/", label: "Today" },
-    { href: "/deals", label: "Deals" },
+    ...(isSdr ? [] : [{ href: "/", label: "Today" }, { href: "/deals", label: "Deals" }]),
+    ...(isSdr || me?.canSeeAllTeam ? [{ href: "/outreach", label: "Outreach" }] : []),
     ...(me?.canSeeAllTeam ? [{ href: "/forecast", label: "Forecast" }, { href: "/command", label: "Command" }] : []),
   ];
 
@@ -75,7 +78,9 @@ function UserSwitcher({ me }: { me: Me }) {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ userId }),
     });
-    window.location.href = "/"; // reload into the new role's default home
+    // Land each role on its home surface (SDRs have no AE Today queue).
+    const target = me.users.find((u) => u.id === userId);
+    window.location.href = target?.role === "SDR" ? "/outreach" : "/";
   }
   return (
     <div className="relative ml-2">

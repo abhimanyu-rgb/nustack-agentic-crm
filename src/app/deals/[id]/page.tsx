@@ -21,7 +21,7 @@ export default function DealRoom({ params }: { params: Promise<{ id: string }> }
   useEffect(load, [load]);
 
   if (!d || d.error) return <div className="text-gray-500">Loading deal…</div>;
-  const { deal, signals, qualification, stakeholders, commitments, pendingProposal, audit, judgments } = d;
+  const { deal, signals, qualification, stakeholders, commitments, pendingProposal, escalatedProposal, audit, judgments } = d;
   const s = deal.scores;
 
   async function resolveProposal(decision: "APPROVE" | "REJECT", reasonCode?: string, note?: string) {
@@ -111,6 +111,19 @@ export default function DealRoom({ params }: { params: Promise<{ id: string }> }
             ) : (
               <ReasonPicker onSubmit={(code, note) => resolveProposal("REJECT", code, note)} onCancel={() => setRejecting(false)} />
             )}
+          </Card>
+        )}
+
+        {/* Escalated to manager — AE endorsed, awaiting sign-off */}
+        {escalatedProposal && (
+          <Card className="border-amber-500/40 bg-amber-500/5 p-4">
+            <div className="flex items-center gap-2 text-sm text-amber-300">
+              <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] uppercase tracking-wider">Awaiting manager</span>
+              <span>
+                Move to <span className="font-medium">{escalatedProposal.proposedStageName}</span> endorsed — pending manager sign-off.
+              </span>
+            </div>
+            <p className="mt-1 text-xs text-gray-500">{escalatedProposal.proposedStageName} requires manager approval before the deal advances.</p>
           </Card>
         )}
 

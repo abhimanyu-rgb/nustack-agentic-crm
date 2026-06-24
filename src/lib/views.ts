@@ -72,6 +72,7 @@ export function dealDetail(dealId: string) {
     return { ...s, contactName: contact?.name ?? "", contactTitle: contact?.title ?? "" };
   });
   const pendingProposal = dealProposals(dealId).find((p) => p.status === "PENDING_APPROVAL");
+  const escalatedProposal = dealProposals(dealId).find((p) => p.status === "PENDING_MANAGER_APPROVAL");
   return {
     deal: dealSummary(deal),
     stage,
@@ -86,6 +87,13 @@ export function dealDetail(dealId: string) {
           ...pendingProposal,
           proposedStageName: getStage(pendingProposal.proposedStageId)?.name,
           currentStageName: getStage(pendingProposal.currentStageId)?.name,
+        }
+      : null,
+    escalatedProposal: escalatedProposal
+      ? {
+          ...escalatedProposal,
+          proposedStageName: getStage(escalatedProposal.proposedStageId)?.name,
+          currentStageName: getStage(escalatedProposal.currentStageId)?.name,
         }
       : null,
     actions: dealActions(dealId).filter((a) => a.status === "PENDING"),
@@ -213,5 +221,32 @@ export function commandView() {
     },
     perAE,
     funnel,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// SDR outreach surface (PRD 09.2 SDR queue + 07.12 Outreach Optimization).
+// ---------------------------------------------------------------------------
+
+export function sdrView(sdrUserId?: string) {
+  const suggestions = db.outreachSuggestions
+    .filter((s) => s.status === "PENDING" && (!sdrUserId || s.assignedToUserId === sdrUserId))
+    .sort((a, b) => b.priorityScore - a.priorityScore)
+    .map((s) => ({
+      ...s,
+      targetAccount: s.targetAccountId ? db.targetAccounts.find((t) => t.id === s.targetAccountId) : undefined,
+    }));
+
+  const targets = db.targetAccounts
+    .filter((t) => t.status !== "DISMISSED")
+    .sort((a, b) => b.icpFitScore + b.marketSignalScore - (a.icpFitScore + a.marketSignalScore));
+
+  const wonCount = db.deals.filter((d) => d.status === "WON").length;
+  const lostCount = db.deals.filter((d) => d.status === "LOST").length;
+
+  return {
+    suggestions,
+    targets,
+    learnedFrom: { wonCount, lostCount },
   };
 }
