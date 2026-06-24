@@ -61,7 +61,7 @@ export default function CommandPage() {
           <div className="space-y-2">
             {funnel.map((f: any) => (
               <Link key={f.stageId} href={`/deals?stage=${f.stageId}`} className="flex items-center gap-3 group">
-                <div className="w-32 shrink-0 truncate text-sm text-gray-300 group-hover:text-white">{f.stageName}</div>
+                <div className="w-32 shrink-0 truncate text-sm text-gray-300 group-hover:text-indigo-400">{f.stageName}</div>
                 <div className="relative h-7 flex-1 overflow-hidden rounded bg-canvas">
                   <div
                     className="absolute inset-y-0 left-0 rounded bg-indigo-500/40 group-hover:bg-indigo-500/60"

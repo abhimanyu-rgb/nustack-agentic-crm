@@ -17,19 +17,21 @@
 }
 
 html.light {
-  --canvas: #f7f8fa;
+  --canvas: #f1f5f9;
   --panel: #ffffff;
   --panel-soft: rgba(255, 255, 255, 0.85);
-  --edge: #e2e8f0;
-  --text: #1e293b;
-  --text-muted: #64748b;
-  --text-subtle: #94a3b8;
+  --edge: #d8dee9;
+  --text: #0f172a;        /* near-black body text, ~16:1 on white */
+  --text-muted: #475569;  /* secondary text, ~7:1 on white (AA+) */
+  --text-subtle: #64748b; /* captions/labels, ~4.9:1 on white (AA) */
   color-scheme: light;
 }
 
 body {
   background: var(--canvas);
   color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* thin scrollbars */
@@ -38,10 +40,33 @@ body {
   scrollbar-color: var(--edge) transparent;
 }
 
-/* In light mode, soften the gray text utilities so they read on white.
-   These remap the most-used Tailwind grays to theme-aware values. */
-html.light .text-gray-400 { color: var(--text-muted); }
-html.light .text-gray-500 { color: var(--text-subtle); }
-html.light .text-gray-300 { color: #334155; }
-html.light .text-gray-200 { color: #1e293b; }
-html.light .text-gray-600 { color: #94a3b8; }
+/* Light-mode gray ramp: the dark theme leans on light grays that wash out on
+   white. Remap each Tailwind gray utility to a contrast-safe slate value. */
+html.light .text-gray-200 { color: #0f172a; }
+html.light .text-gray-300 { color: #1e293b; }
+html.light .text-gray-400 { color: var(--text-muted); }   /* #475569 */
+html.light .text-gray-500 { color: var(--text-subtle); }  /* #64748b */
+html.light .text-gray-600 { color: #64748b; }
+
+/* Accent text colors are tuned for dark backgrounds (-300 shades). On white
+   they're too pale, so darken them to -600/-700 for readable contrast. */
+html.light .text-indigo-300,
+html.light .text-indigo-200 { color: #4338ca; }
+html.light .text-indigo-400 { color: #4f46e5; }
+html.light .text-emerald-300 { color: #047857; }
+html.light .text-rose-300 { color: #be123c; }
+html.light .text-amber-300 { color: #b45309; }
+html.light .text-sky-300 { color: #0369a1; }
+html.light .text-violet-300 { color: #6d28d9; }
+html.light .text-teal-300 { color: #0f766e; }
+
+/* Tinted chip/badge backgrounds (color-500/10..20) are nearly invisible on
+   white; give them a slightly stronger tint so the pill shape reads. */
+html.light [class*="bg-emerald-500/1"] { background-color: rgba(16,185,129,0.14); }
+html.light [class*="bg-rose-500/1"] { background-color: rgba(244,63,94,0.14); }
+html.light [class*="bg-amber-500/1"] { background-color: rgba(245,158,11,0.16); }
+html.light [class*="bg-indigo-500/1"],
+html.light [class*="bg-indigo-500/2"] { background-color: rgba(99,102,241,0.14); }
+html.light [class*="bg-sky-500/1"] { background-color: rgba(14,165,233,0.14); }
+html.light [class*="bg-violet-500/1"] { background-color: rgba(139,92,246,0.14); }
+html.light [class*="bg-teal-500/1"] { background-color: rgba(20,184,166,0.14); }
