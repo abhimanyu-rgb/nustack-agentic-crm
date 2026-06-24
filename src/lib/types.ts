@@ -1,4 +1,4 @@
-// Domain types for NuStack Agentic Revenue CRM (Release 0 prototype).
+// Domain types for Nudge — Agentic Revenue CRM by NuStack (Release 0 prototype).
 // Mirrors PRD 04 (Core Objects), 05 (Signal Taxonomy), 06 (Scores), 08 (Autonomy).
 // Kept deliberately flat and JSON-serializable for the in-memory store.
 

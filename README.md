@@ -1,4 +1,8 @@
-# NuStack Agentic Revenue CRM — Release 0 Prototype
+# Nudge — Agentic Revenue CRM by NuStack (Release 0 Prototype)
+
+> **Nudge** turns sales signals into explainable judgments and *nudges* the next
+> best action, gated by confidence. The action queue is the home; the CRM record
+> is a byproduct.
 
 A working **closed-loop revenue execution** prototype: sales activity becomes
 signals, signals become explainable deal judgments, judgments become

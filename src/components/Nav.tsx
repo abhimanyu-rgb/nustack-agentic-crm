@@ -35,7 +35,10 @@ export function Nav() {
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3">
         <Link href="/" className="flex items-center gap-2">
           <span className="grid h-7 w-7 place-items-center rounded bg-indigo-500 text-sm font-bold text-white">N</span>
-          <span className="font-semibold tracking-tight">NuStack</span>
+          <span className="flex items-baseline gap-1.5">
+            <span className="font-semibold tracking-tight">Nudge</span>
+            <span className="text-[10px] text-gray-500">by NuStack</span>
+          </span>
           <span className="ml-1 rounded bg-edge px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-gray-400">
             Release&nbsp;0
           </span>

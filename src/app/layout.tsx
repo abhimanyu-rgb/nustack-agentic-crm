@@ -4,8 +4,8 @@ import { Nav } from "@/components/Nav";
 import { ToastProvider } from "@/components/ux";
 
 export const metadata: Metadata = {
-  title: "NuStack Agentic Revenue CRM",
-  description: "Closed-loop revenue execution prototype (Release 0)",
+  title: "Nudge · Agentic Revenue CRM by NuStack",
+  description: "Nudge: a closed-loop revenue execution system that turns signals into explainable judgments and confidence-gated actions. By NuStack. (Release 0 prototype)",
 };
 
 // Set the theme class before paint to avoid a flash. Reads saved choice, else
