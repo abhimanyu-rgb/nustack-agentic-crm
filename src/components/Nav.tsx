@@ -2,16 +2,29 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 
-const links = [
-  { href: "/", label: "Today" },
-  { href: "/deals", label: "Deals" },
-  { href: "/forecast", label: "Forecast" },
-  { href: "/command", label: "Command" },
-];
+interface Me {
+  me: { id: string; name: string; role: string };
+  canSeeAllTeam: boolean;
+  users: { id: string; name: string; role: string }[];
+}
 
 export function Nav() {
   const path = usePathname();
+  const [me, setMe] = useState<Me | null>(null);
+
+  useEffect(() => {
+    fetch("/api/me").then((r) => r.json()).then(setMe);
+  }, [path]);
+
+  // Command + Forecast are leadership surfaces — only show to all-team roles.
+  const links = [
+    { href: "/", label: "Today" },
+    { href: "/deals", label: "Deals" },
+    ...(me?.canSeeAllTeam ? [{ href: "/forecast", label: "Forecast" }, { href: "/command", label: "Command" }] : []),
+  ];
+
   return (
     <header className="border-b border-edge bg-panel/60 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3">
@@ -37,10 +50,64 @@ export function Nav() {
               </Link>
             );
           })}
+          {me && <UserSwitcher me={me} />}
           <ResetButton />
         </nav>
       </div>
     </header>
+  );
+}
+
+const roleLabel: Record<string, string> = {
+  AE: "AE",
+  SDR: "SDR",
+  SALES_MANAGER: "Manager",
+  REVOPS: "RevOps",
+  ADMIN: "Admin",
+  EXECUTIVE_VIEWER: "Exec",
+};
+
+function UserSwitcher({ me }: { me: Me }) {
+  const [open, setOpen] = useState(false);
+  async function switchTo(userId: string) {
+    await fetch("/api/me", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ userId }),
+    });
+    window.location.href = "/"; // reload into the new role's default home
+  }
+  return (
+    <div className="relative ml-2">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-center gap-2 rounded-md border border-edge px-3 py-1.5 text-xs text-gray-300 hover:bg-edge"
+        title="Act as a different user (prototype role switcher)"
+      >
+        <span className="grid h-5 w-5 place-items-center rounded-full bg-indigo-500/30 text-[10px] text-indigo-200">
+          {me.me.name.split(" ").map((n) => n[0]).join("")}
+        </span>
+        {me.me.name.split(" ")[0]}
+        <span className="rounded bg-edge px-1 text-[9px] uppercase tracking-wider text-gray-400">{roleLabel[me.me.role]}</span>
+      </button>
+      {open && (
+        <div className="absolute right-0 z-20 mt-1 w-52 rounded-lg border border-edge bg-panel p-1 shadow-xl">
+          <div className="px-2 py-1 text-[10px] uppercase tracking-wider text-gray-500">Act as</div>
+          {me.users.map((u) => (
+            <button
+              key={u.id}
+              onClick={() => switchTo(u.id)}
+              className={`flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-xs hover:bg-edge ${
+                u.id === me.me.id ? "text-indigo-300" : "text-gray-300"
+              }`}
+            >
+              <span>{u.name}</span>
+              <span className="rounded bg-edge px-1 text-[9px] uppercase tracking-wider text-gray-500">{roleLabel[u.role]}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -51,10 +118,10 @@ function ResetButton() {
         await fetch("/api/reset", { method: "POST" });
         window.location.reload();
       }}
-      className="ml-2 rounded-md border border-edge px-3 py-1.5 text-xs text-gray-400 hover:bg-edge hover:text-gray-200"
+      className="ml-1 rounded-md border border-edge px-3 py-1.5 text-xs text-gray-400 hover:bg-edge hover:text-gray-200"
       title="Reset all demo data to the seeded state"
     >
-      Reset demo
+      Reset
     </button>
   );
 }

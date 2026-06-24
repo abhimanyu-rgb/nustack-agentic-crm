@@ -7,9 +7,20 @@ import { Card, SectionTitle, fmtMoney } from "@/components/ui";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export default function CommandPage() {
   const [data, setData] = useState<any>(null);
+  const [forbidden, setForbidden] = useState(false);
   useEffect(() => {
-    fetch("/api/command").then((r) => r.json()).then(setData);
+    fetch("/api/command").then(async (r) => {
+      if (r.status === 403) return setForbidden(true);
+      setData(await r.json());
+    });
   }, []);
+  if (forbidden)
+    return (
+      <div className="rounded-xl border border-edge bg-panel/70 p-8 text-center">
+        <div className="text-lg font-medium">Command Center is for managers &amp; admins</div>
+        <p className="mt-1 text-sm text-gray-500">Switch to a manager or admin user to view company-wide performance.</p>
+      </div>
+    );
   if (!data) return <div className="text-gray-500">Loading command center…</div>;
 
   const { company, perAE, funnel } = data;
@@ -95,7 +106,9 @@ export default function CommandPage() {
             <tbody>
               {perAE.map((ae: any) => (
                 <tr key={ae.id} className="border-b border-edge/50 last:border-0 hover:bg-edge/30">
-                  <td className="px-4 py-2.5 font-medium">{ae.name}</td>
+                  <td className="px-4 py-2.5 font-medium">
+                    <Link href={`/deals?owner=${ae.id}`} className="text-indigo-300 hover:underline">{ae.name}</Link>
+                  </td>
                   <td className="px-4 py-2.5 tabular-nums text-gray-400">{ae.openCount}</td>
                   <td className="px-4 py-2.5 tabular-nums text-gray-300">{fmtMoney(ae.pipelineValue)}</td>
                   <td className="px-4 py-2.5 tabular-nums text-violet-300">{fmtMoney(ae.commitValue)}</td>

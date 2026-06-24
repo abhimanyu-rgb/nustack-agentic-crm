@@ -16,13 +16,24 @@ const REASONS = [
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export default function ForecastPage() {
   const [data, setData] = useState<any>(null);
+  const [forbidden, setForbidden] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
 
   const load = useCallback(() => {
-    fetch("/api/forecast").then((r) => r.json()).then(setData);
+    fetch("/api/forecast").then(async (r) => {
+      if (r.status === 403) return setForbidden(true);
+      setData(await r.json());
+    });
   }, []);
   useEffect(load, [load]);
 
+  if (forbidden)
+    return (
+      <div className="rounded-xl border border-edge bg-panel/70 p-8 text-center">
+        <div className="text-lg font-medium">Forecast Review is for managers &amp; admins</div>
+        <p className="mt-1 text-sm text-gray-500">Switch to a manager or admin user to view the team forecast.</p>
+      </div>
+    );
   if (!data) return <div className="text-gray-500">Loading forecast…</div>;
 
   async function override(dealId: string, category: string, reasonCode: string) {
