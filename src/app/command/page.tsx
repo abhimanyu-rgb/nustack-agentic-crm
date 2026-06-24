@@ -17,8 +17,7 @@ export default function CommandPage() {
   if (forbidden)
     return (
       <div className="rounded-xl border border-edge bg-panel/70 p-8 text-center">
-        <div className="text-lg font-medium">Command Center is for managers &amp; admins</div>
-        <p className="mt-1 text-sm text-gray-500">Switch to a manager or admin user to view company-wide performance.</p>
+        <div className="text-lg font-medium">Access not allowed</div>
       </div>
     );
   if (!data) return <div className="text-gray-500">Loading command center…</div>;

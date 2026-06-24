@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   const me = await currentUser();
   if (!canSeeAllTeam(me.role)) {
-    return NextResponse.json({ error: "forbidden" }, { status: 403 });
+    return NextResponse.json({ error: "Access not allowed" }, { status: 403 });
   }
   return NextResponse.json(commandView());
 }
