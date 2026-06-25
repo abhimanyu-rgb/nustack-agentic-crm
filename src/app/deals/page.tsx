@@ -1,124 +1,104 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { Card, ScoreChip, fmtMoney, fmtDate } from "@/components/ui";
-import { BackButton } from "@/components/BackButton";
-import { EmptyState, SkeletonList } from "@/components/ux";
+import { Card, fmtMoney, fmtDate } from "@/components/ui";
+import { EmptyState, SkeletonList, useToast } from "@/components/ux";
+import { Modal, Field, SelectField, PrimaryButton } from "@/components/Modal";
 
-interface DealRow {
-  id: string;
-  name: string;
-  accountName: string;
-  stageName: string;
-  amount: number;
-  closeDate: string;
-  forecastCategory: string;
-  status: string;
-  scores: { dealHealth: number; risk: number; stageReadiness: number };
-}
+/* eslint-disable @typescript-eslint/no-explicit-any */
+const STAGES = ["Prospecting", "Qualified", "Discovery", "Solution Fit", "Business Case", "Negotiation", "Procurement / Legal"];
+const FORECAST = ["PIPELINE", "BEST_CASE", "COMMIT", "OMITTED"];
 
-function DealsList() {
-  const params = useSearchParams();
-  const owner = params.get("owner");
-  const risk = params.get("risk");
-  const stage = params.get("stage");
-  const forecast = params.get("forecast");
-  const [deals, setDeals] = useState<DealRow[]>([]);
-  const [meta, setMeta] = useState<{ scope: string; ownerName?: string; filterLabel?: string }>({ scope: "self" });
+export default function DealsPage() {
+  const [deals, setDeals] = useState<any[] | null>(null);
+  const [companies, setCompanies] = useState<any[]>([]);
+  const [creating, setCreating] = useState(false);
 
-  const hasFilter = Boolean(owner || risk || stage || forecast);
-
-  useEffect(() => {
-    const q = new URLSearchParams();
-    if (owner) q.set("owner", owner);
-    if (risk) q.set("risk", risk);
-    if (stage) q.set("stage", stage);
-    if (forecast) q.set("forecast", forecast);
-    const qs = q.toString();
-    fetch(`/api/deals${qs ? `?${qs}` : ""}`)
-      .then((r) => r.json())
-      .then((d) => {
-        setDeals(d.deals);
-        setMeta({ scope: d.scope, ownerName: d.ownerName, filterLabel: d.filterLabel });
-      });
-  }, [owner, risk, stage, forecast]);
-
-  const open = deals.filter((d) => d.status === "OPEN");
-  const closed = deals.filter((d) => d.status !== "OPEN");
-
-  // Build a heading from owner scope + any active filter.
-  const whose =
-    meta.scope === "owner" && meta.ownerName ? `${meta.ownerName}'s` : meta.scope === "self" ? "My" : "All";
-  const heading = meta.filterLabel ? `${whose} deals · ${meta.filterLabel}` : `${whose} deals`;
+  const load = useCallback(() => {
+    fetch("/api/deals").then((r) => r.json()).then((d) => setDeals(d.deals ?? []));
+    fetch("/api/companies").then((r) => r.json()).then((d) => setCompanies(d.companies ?? []));
+  }, []);
+  useEffect(load, [load]);
 
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
-        <div>
-          {hasFilter && <div className="mb-1"><BackButton fallback="/deals" /></div>}
-          <h1 className="text-2xl font-semibold">{heading}</h1>
-        </div>
-        {hasFilter && (
-          <Link href="/deals" className="rounded border border-edge px-3 py-1.5 text-xs text-gray-400 hover:bg-edge">
-            Clear filter
-          </Link>
-        )}
+        <h1 className="text-2xl font-semibold">Deals</h1>
+        <PrimaryButton onClick={() => setCreating(true)}>+ New deal</PrimaryButton>
       </div>
 
-      {open.length === 0 ? (
-        <EmptyState
-          icon="🗂"
-          title="No open deals here"
-          hint={hasFilter ? "Try clearing the filter to see all deals." : "Process a transcript in a deal to start the loop."}
-        />
+      {deals === null ? (
+        <SkeletonList rows={4} />
+      ) : deals.length === 0 ? (
+        <EmptyState icon="🤝" title="No deals yet" hint="Create your first deal to start tracking it." />
       ) : (
         <div className="grid gap-3">
-          {open.map((d) => (
+          {deals.map((d) => (
             <Link key={d.id} href={`/deals/${d.id}`}>
-              <Card className="flex items-center justify-between p-4 transition hover:border-gray-600">
+              <Card className="flex items-center justify-between p-4 transition hover:border-gray-500">
                 <div>
                   <div className="font-medium">{d.name}</div>
                   <div className="text-xs text-gray-500">
-                    {d.accountName} · {d.stageName} · {fmtMoney(d.amount)} · closes {fmtDate(d.closeDate)} ·{" "}
-                    <span className="text-gray-400">{d.forecastCategory}</span>
+                    {d.account?.name ?? "No company"} · {d.stage} · {fmtMoney(d.amount)}
+                    {d.closeDate ? ` · closes ${fmtDate(d.closeDate)}` : ""}
                   </div>
                 </div>
-                <div className="flex gap-2">
-                  <ScoreChip label="Health" value={d.scores.dealHealth} />
-                  <ScoreChip label="Readiness" value={d.scores.stageReadiness} />
-                  <ScoreChip label="Risk" value={d.scores.risk} invert />
-                </div>
+                <span className="rounded bg-edge px-2 py-0.5 text-[11px] text-gray-300">{d.status === "OPEN" ? d.forecastCategory : d.status}</span>
               </Card>
             </Link>
           ))}
         </div>
       )}
 
-      {closed.length > 0 && (
-        <>
-          <h2 className="mb-3 mt-8 text-sm font-semibold uppercase tracking-wider text-gray-500">Closed</h2>
-          <div className="grid gap-2">
-            {closed.map((d) => (
-              <Card key={d.id} className="flex items-center justify-between p-3 opacity-70">
-                <div className="text-sm">{d.name}</div>
-                <div className="text-xs text-gray-500">
-                  {d.status} · {fmtMoney(d.amount)}
-                </div>
-              </Card>
-            ))}
-          </div>
-        </>
+      {creating && (
+        <DealForm companies={companies} onClose={() => setCreating(false)} onCreated={() => { setCreating(false); load(); }} />
       )}
     </div>
   );
 }
 
-export default function DealsPage() {
+function DealForm({ companies, onClose, onCreated }: { companies: any[]; onClose: () => void; onCreated: () => void }) {
+  const { toast } = useToast();
+  const [name, setName] = useState("");
+  const [accountId, setAccountId] = useState("");
+  const [stage, setStage] = useState("Prospecting");
+  const [amount, setAmount] = useState("");
+  const [forecastCategory, setForecast] = useState("PIPELINE");
+  const [closeDate, setCloseDate] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    const res = await fetch("/api/deals", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name, accountId: accountId || undefined, stage, amount, forecastCategory, closeDate: closeDate || undefined }),
+    });
+    setBusy(false);
+    if (res.ok) { toast("Deal created"); onCreated(); }
+    else { const e = await res.json(); toast(e.error ?? "Could not create deal", "error"); }
+  }
+
   return (
-    <Suspense fallback={<SkeletonList rows={5} />}>
-      <DealsList />
-    </Suspense>
+    <Modal title="New deal" onClose={onClose}>
+      <form onSubmit={submit} className="space-y-3">
+        <Field label="Deal name" value={name} onChange={setName} placeholder="Acme: Revenue Platform" required autoFocus />
+        <SelectField label="Company" value={accountId} onChange={setAccountId} options={[{ value: "", label: "No company" }, ...companies.map((c) => ({ value: c.id, label: c.name }))]} />
+        <div className="grid grid-cols-2 gap-3">
+          <SelectField label="Stage" value={stage} onChange={setStage} options={STAGES.map((s) => ({ value: s, label: s }))} />
+          <SelectField label="Forecast" value={forecastCategory} onChange={setForecast} options={FORECAST.map((f) => ({ value: f, label: f }))} />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Amount (USD)" type="number" value={amount} onChange={setAmount} placeholder="50000" />
+          <Field label="Close date" type="date" value={closeDate} onChange={setCloseDate} />
+        </div>
+        <div className="flex justify-end gap-2 pt-2">
+          <button type="button" onClick={onClose} className="rounded-md border border-edge px-4 py-2 text-sm text-gray-300 hover:bg-edge">Cancel</button>
+          <PrimaryButton type="submit" disabled={busy || !name.trim()}>{busy ? "Creating…" : "Create deal"}</PrimaryButton>
+        </div>
+      </form>
+    </Modal>
   );
 }

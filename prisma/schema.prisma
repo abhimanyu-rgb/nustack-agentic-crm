@@ -1,0 +1,123 @@
+// Nudge — real persistence layer (Step 1).
+// SQLite for local-real use; swappable to Postgres later by changing provider.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Each user gets their own workspace (tenant) on signup.
+model Workspace {
+  id           String    @id @default(cuid())
+  name         String
+  createdAt    DateTime  @default(now())
+  users        User[]
+  accounts     Account[]
+  contacts     Contact[]
+  deals        Deal[]
+  activities   Activity[]
+}
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  name         String
+  passwordHash String
+  role         String    @default("AE") // AE | SALES_MANAGER | REVOPS | ADMIN
+  workspaceId  String
+  workspace    Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  sessions     Session[]
+  ownedDeals   Deal[]    @relation("DealOwner")
+  ownedAccounts Account[] @relation("AccountOwner")
+  activities   Activity[]
+  createdAt    DateTime  @default(now())
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+// Company (HubSpot vocab) — the org behind deals.
+model Account {
+  id            String    @id @default(cuid())
+  workspaceId   String
+  workspace     Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  name          String
+  domain        String?
+  industry      String?
+  employeeCount Int?
+  location      String?
+  ownerId       String?
+  owner         User?     @relation("AccountOwner", fields: [ownerId], references: [id])
+  contacts      Contact[]
+  deals         Deal[]
+  activities    Activity[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Contact {
+  id          String    @id @default(cuid())
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  accountId   String?
+  account     Account?  @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  name        String
+  email       String?
+  title       String?
+  phone       String?
+  buyingRole  String?   // ECONOMIC_BUYER | CHAMPION | ... (see UI buyingRoleLabel)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Deal {
+  id               String    @id @default(cuid())
+  workspaceId      String
+  workspace        Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  accountId        String?
+  account          Account?  @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  name             String
+  ownerId          String
+  owner            User      @relation("DealOwner", fields: [ownerId], references: [id])
+  stage            String    @default("Prospecting")
+  amount           Float     @default(0)
+  currency         String    @default("USD")
+  closeDate        DateTime?
+  forecastCategory String    @default("PIPELINE") // PIPELINE | BEST_CASE | COMMIT | CLOSED | OMITTED
+  status           String    @default("OPEN")     // OPEN | WON | LOST | SLIPPED
+  // Lightweight scores (computed; full agentic scoring lands in a later step).
+  healthScore      Int       @default(50)
+  riskScore        Int       @default(40)
+  activities       Activity[]
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+
+// Captured/logged activity: email, meeting, call, note, transcript.
+model Activity {
+  id          String    @id @default(cuid())
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  dealId      String?
+  deal        Deal?     @relation(fields: [dealId], references: [id], onDelete: SetNull)
+  accountId   String?
+  account     Account?  @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  ownerId     String
+  owner       User      @relation(fields: [ownerId], references: [id])
+  type        String    // EMAIL | MEETING | CALL | NOTE | TRANSCRIPT
+  source      String    @default("MANUAL") // MANUAL | GMAIL | CALENDAR | READ_AI
+  subject     String?
+  body        String?   // note text / transcript / email body
+  occurredAt  DateTime  @default(now())
+  createdAt   DateTime  @default(now())
+}

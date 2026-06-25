@@ -7,44 +7,37 @@ export const dynamic = "force-dynamic";
 export async function GET(req: NextRequest) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "UNAUTHENTICATED" }, { status: 401 });
-  const sp = req.nextUrl.searchParams;
-  const status = sp.get("status"); // OPEN, WON, ...
-  const accountId = sp.get("accountId");
-  const deals = await prisma.deal.findMany({
-    where: {
-      workspaceId: user.workspaceId,
-      ...(status ? { status } : {}),
-      ...(accountId ? { accountId } : {}),
-    },
-    orderBy: { updatedAt: "desc" },
+  const accountId = req.nextUrl.searchParams.get("accountId");
+  const contacts = await prisma.contact.findMany({
+    where: { workspaceId: user.workspaceId, ...(accountId ? { accountId } : {}) },
+    orderBy: { createdAt: "desc" },
     include: { account: { select: { id: true, name: true } } },
   });
-  return NextResponse.json({ deals });
+  return NextResponse.json({ contacts });
 }
 
 export async function POST(req: NextRequest) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "UNAUTHENTICATED" }, { status: 401 });
   const b = await req.json().catch(() => ({}));
-  if (!b.name?.trim()) return NextResponse.json({ error: "Deal name is required." }, { status: 400 });
+  if (!b.name?.trim()) return NextResponse.json({ error: "Contact name is required." }, { status: 400 });
+  // Validate account belongs to workspace if provided.
   if (b.accountId) {
     const acc = await prisma.account.findUnique({ where: { id: b.accountId } });
     if (!acc || acc.workspaceId !== user.workspaceId) {
       return NextResponse.json({ error: "Invalid company." }, { status: 400 });
     }
   }
-  const deal = await prisma.deal.create({
+  const contact = await prisma.contact.create({
     data: {
       workspaceId: user.workspaceId,
-      ownerId: user.id,
       accountId: b.accountId || null,
       name: b.name.trim(),
-      stage: b.stage || "Prospecting",
-      amount: b.amount ? Number(b.amount) : 0,
-      currency: b.currency || "USD",
-      closeDate: b.closeDate ? new Date(b.closeDate) : null,
-      forecastCategory: b.forecastCategory || "PIPELINE",
+      email: b.email?.trim() || null,
+      title: b.title?.trim() || null,
+      phone: b.phone?.trim() || null,
+      buyingRole: b.buyingRole || null,
     },
   });
-  return NextResponse.json({ deal });
+  return NextResponse.json({ contact });
 }
