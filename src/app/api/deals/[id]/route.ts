@@ -12,6 +12,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     where: { id },
     include: {
       account: { select: { id: true, name: true, contacts: true } },
+      contacts: { orderBy: { createdAt: "asc" } }, // buying committee on this deal
       activities: { orderBy: { occurredAt: "desc" } },
     },
   });

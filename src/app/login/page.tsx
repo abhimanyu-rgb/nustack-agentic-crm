@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
@@ -11,6 +11,15 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  // Ensure the demo admin account exists (idempotent) so the demo login works.
+  useEffect(() => { fetch("/api/admin-seed", { method: "POST" }).catch(() => {}); }, []);
+
+  function fillDemo(which: "admin" | "abhimanyu") {
+    setMode("login");
+    setEmail(which === "admin" ? "admin@nurix.ai" : "abhimanyu@nurix.ai");
+    setPassword("123456");
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -63,6 +72,18 @@ export default function LoginPage() {
             {busy ? "Please wait…" : mode === "login" ? "Sign in" : "Create account"}
           </button>
         </form>
+
+        <div className="mt-4 rounded-lg border border-edge bg-canvas p-3 text-center">
+          <div className="text-[11px] text-gray-500">Quick sign in (password 123456):</div>
+          <div className="mt-1.5 flex justify-center gap-2">
+            <button onClick={() => fillDemo("abhimanyu")} className="rounded border border-edge px-2.5 py-1 text-xs text-gray-300 hover:bg-edge">
+              Abhimanyu (AE)
+            </button>
+            <button onClick={() => fillDemo("admin")} className="rounded border border-edge px-2.5 py-1 text-xs text-gray-300 hover:bg-edge">
+              Admin (demo team)
+            </button>
+          </div>
+        </div>
 
         <div className="mt-4 text-center text-xs text-gray-500">
           {mode === "login" ? "New to Nudge? " : "Already have an account? "}

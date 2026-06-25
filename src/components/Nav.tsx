@@ -10,12 +10,13 @@ interface Me {
   workspace?: { id: string; name: string };
 }
 
-const LINKS = [
+const BASE_LINKS = [
   { href: "/", label: "Today" },
   { href: "/deals", label: "Deals" },
   { href: "/companies", label: "Companies" },
   { href: "/contacts", label: "Contacts" },
 ];
+const LEADERSHIP_ROLES = new Set(["ADMIN", "SALES_MANAGER", "REVOPS"]);
 
 export function Nav() {
   const path = usePathname();
@@ -29,6 +30,10 @@ export function Nav() {
   // Hide the nav on the login screen.
   if (path === "/login") return null;
 
+  const links = me?.user && LEADERSHIP_ROLES.has(me.user.role)
+    ? [...BASE_LINKS, { href: "/command", label: "Command" }]
+    : BASE_LINKS;
+
   return (
     <header className="border-b border-edge bg-panel backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3">
@@ -41,7 +46,7 @@ export function Nav() {
         </Link>
 
         <nav className="flex items-center gap-1">
-          {LINKS.map((l) => {
+          {links.map((l) => {
             const active = l.href === "/" ? path === "/" : path.startsWith(l.href);
             return (
               <Link

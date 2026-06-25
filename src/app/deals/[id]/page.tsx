@@ -11,6 +11,16 @@ const STAGES = ["Prospecting", "Qualified", "Discovery", "Solution Fit", "Busine
 const FORECAST = ["PIPELINE", "BEST_CASE", "COMMIT", "OMITTED"];
 const STATUS = ["OPEN", "WON", "LOST", "SLIPPED"];
 const ACTIVITY_TYPES = ["NOTE", "EMAIL", "MEETING", "CALL", "TRANSCRIPT"];
+const BUYING_ROLES = [
+  { value: "", label: "No role" },
+  { value: "ECONOMIC_BUYER", label: "Decision maker" },
+  { value: "CHAMPION", label: "Champion" },
+  { value: "TECHNICAL_BUYER", label: "Influencer (technical)" },
+  { value: "PROCUREMENT", label: "Budget holder" },
+  { value: "LEGAL", label: "Legal & compliance" },
+  { value: "END_USER", label: "End user" },
+  { value: "BLOCKER", label: "Blocker" },
+];
 
 export default function DealRoom({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -73,29 +83,107 @@ export default function DealRoom({ params }: { params: Promise<{ id: string }> }
           <ActivityLog dealId={id} activities={deal.activities} onLogged={load} />
         </div>
 
-        {/* Contacts on the account */}
+        {/* Buying committee: contacts linked directly to this deal */}
         <div>
-          <Card className="p-4">
-            <SectionTitle hint="on this company">Contacts</SectionTitle>
-            {deal.account?.contacts?.length ? (
-              <div className="space-y-2">
-                {deal.account.contacts.map((c: any) => (
-                  <div key={c.id} className="rounded border border-edge p-2 text-sm">
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium">{c.name}</span>
-                      {c.buyingRole && <span className="text-[10px] uppercase tracking-wider text-indigo-300">{buyingRoleLabel(c.buyingRole)}</span>}
-                    </div>
-                    <div className="text-xs text-gray-500">{c.title}{c.email ? ` · ${c.email}` : ""}</div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-xs text-gray-500">No contacts linked to this company yet. Add them from the Contacts tab.</p>
-            )}
-          </Card>
+          <BuyingCommittee dealId={id} contacts={deal.contacts ?? []} companyContacts={deal.account?.contacts ?? []} onChange={load} />
         </div>
       </div>
     </div>
+  );
+}
+
+function BuyingCommittee({ dealId, contacts, companyContacts, onChange }: { dealId: string; contacts: any[]; companyContacts: any[]; onChange: () => void }) {
+  const { toast } = useToast();
+  const [adding, setAdding] = useState(false);
+
+  async function unlink(contactId: string) {
+    const res = await fetch(`/api/deals/${dealId}/contacts?contactId=${contactId}`, { method: "DELETE" });
+    if (res.ok) { toast("Removed from deal"); onChange(); }
+  }
+
+  // Company contacts not yet on the deal (candidates to link).
+  const linkedIds = new Set(contacts.map((c) => c.id));
+  const linkable = companyContacts.filter((c) => !linkedIds.has(c.id));
+
+  return (
+    <Card className="p-4">
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-400">Buying committee</h2>
+        <button onClick={() => setAdding((v) => !v)} className="text-xs text-indigo-400 hover:underline">
+          {adding ? "Close" : "+ Add contact"}
+        </button>
+      </div>
+
+      {contacts.length ? (
+        <div className="space-y-2">
+          {contacts.map((c: any) => (
+            <div key={c.id} className="group rounded border border-edge p-2 text-sm">
+              <div className="flex items-center justify-between">
+                <span className="font-medium">{c.name}</span>
+                <div className="flex items-center gap-2">
+                  {c.buyingRole && <span className="text-[10px] uppercase tracking-wider text-indigo-300">{buyingRoleLabel(c.buyingRole)}</span>}
+                  <button onClick={() => unlink(c.id)} className="text-gray-600 opacity-0 transition group-hover:opacity-100 hover:text-rose-400" title="Remove from deal">✕</button>
+                </div>
+              </div>
+              <div className="text-xs text-gray-500">{c.title}{c.email ? ` · ${c.email}` : ""}</div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        !adding && <p className="text-xs text-gray-500">No one on this deal yet. Add the stakeholders involved.</p>
+      )}
+
+      {adding && <AddContactToDeal dealId={dealId} linkable={linkable} onDone={() => { setAdding(false); onChange(); }} />}
+    </Card>
+  );
+}
+
+function AddContactToDeal({ dealId, linkable, onDone }: { dealId: string; linkable: any[]; onDone: () => void }) {
+  const { toast } = useToast();
+  const [mode, setMode] = useState<"existing" | "new">(linkable.length ? "existing" : "new");
+  const [contactId, setContactId] = useState(linkable[0]?.id ?? "");
+  const [name, setName] = useState("");
+  const [title, setTitle] = useState("");
+  const [email, setEmail] = useState("");
+  const [buyingRole, setBuyingRole] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    const payload = mode === "existing" ? { contactId } : { name, title, email, buyingRole: buyingRole || undefined };
+    const res = await fetch(`/api/deals/${dealId}/contacts`, {
+      method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload),
+    });
+    setBusy(false);
+    if (res.ok) { toast("Contact added to deal"); onDone(); }
+    else { const e = await res.json(); toast(e.error ?? "Could not add contact", "error"); }
+  }
+
+  return (
+    <form onSubmit={submit} className="mt-3 space-y-2 rounded-lg border border-indigo-500/30 bg-indigo-500/5 p-3">
+      {linkable.length > 0 && (
+        <div className="flex gap-1 text-xs">
+          <button type="button" onClick={() => setMode("existing")} className={`rounded px-2 py-1 ${mode === "existing" ? "bg-indigo-500/20 text-indigo-200" : "text-gray-400"}`}>Existing</button>
+          <button type="button" onClick={() => setMode("new")} className={`rounded px-2 py-1 ${mode === "new" ? "bg-indigo-500/20 text-indigo-200" : "text-gray-400"}`}>New</button>
+        </div>
+      )}
+      {mode === "existing" ? (
+        <SelectField label="Contact" value={contactId} onChange={setContactId} options={linkable.map((c) => ({ value: c.id, label: `${c.name}${c.title ? ` (${c.title})` : ""}` }))} />
+      ) : (
+        <>
+          <Field label="Name" value={name} onChange={setName} placeholder="Dana Whitfield" required autoFocus />
+          <div className="grid grid-cols-2 gap-2">
+            <Field label="Title" value={title} onChange={setTitle} placeholder="VP of Sales" />
+            <Field label="Email" type="email" value={email} onChange={setEmail} placeholder="dana@acme.com" />
+          </div>
+          <SelectField label="Buying role" value={buyingRole} onChange={setBuyingRole} options={BUYING_ROLES} />
+        </>
+      )}
+      <button type="submit" disabled={busy || (mode === "existing" ? !contactId : !name.trim())} className="rounded-md bg-indigo-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-400 disabled:opacity-50">
+        {busy ? "Adding…" : "Add to deal"}
+      </button>
+    </form>
   );
 }
 

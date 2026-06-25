@@ -76,6 +76,7 @@ model Contact {
   title       String?
   phone       String?
   buyingRole  String?   // ECONOMIC_BUYER | CHAMPION | ... (see UI buyingRoleLabel)
+  deals       Deal[]    @relation("DealContacts") // deals this contact is on (buying committee)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 }
@@ -99,6 +100,7 @@ model Deal {
   healthScore      Int       @default(50)
   riskScore        Int       @default(40)
   activities       Activity[]
+  contacts         Contact[] @relation("DealContacts") // buying committee on this deal
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 }
