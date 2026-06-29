@@ -1,7 +1,7 @@
 "use client";
 
 import { use, useCallback, useEffect, useState } from "react";
-import { Card, SectionTitle, fmtMoney, fmtDate, buyingRoleLabel } from "@/components/ui";
+import { Card, ScoreChip, SectionTitle, fmtMoney, fmtDate, buyingRoleLabel } from "@/components/ui";
 import { SkeletonList, useToast } from "@/components/ux";
 import { BackButton } from "@/components/BackButton";
 import { Field, SelectField } from "@/components/Modal";
@@ -25,6 +25,7 @@ const BUYING_ROLES = [
 export default function DealRoom({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [deal, setDeal] = useState<any>(null);
+  const [score, setScore] = useState<any>(null);
   const [notFound, setNotFound] = useState(false);
   const { toast } = useToast();
 
@@ -33,6 +34,7 @@ export default function DealRoom({ params }: { params: Promise<{ id: string }> }
       if (!r.ok) return setNotFound(true);
       const d = await r.json();
       setDeal(d.deal);
+      setScore(d.score);
     });
   }, [id]);
   useEffect(load, [load]);
@@ -66,6 +68,31 @@ export default function DealRoom({ params }: { params: Promise<{ id: string }> }
           {deal.closeDate ? ` · closes ${fmtDate(deal.closeDate)}` : ""}
         </p>
       </div>
+
+      {/* Scores */}
+      {score && (
+        <Card className="mb-5 p-4">
+          <SectionTitle hint="computed from stage, committee & activity">Deal scores</SectionTitle>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <ScoreChip label="Health" value={deal.healthScore} />
+            <ScoreChip label="Risk" value={deal.riskScore} invert />
+          </div>
+          <div className="mt-3 grid gap-3 border-t border-edge pt-3 text-xs sm:grid-cols-2">
+            <div>
+              <div className="mb-1 font-medium text-emerald-300">What's helping</div>
+              {score.healthFactors.length ? score.healthFactors.map((f: any, i: number) => (
+                <div key={i} className="flex justify-between text-gray-400"><span>{f.label}</span><span className="tabular-nums text-emerald-300">+{f.weight}</span></div>
+              )) : <div className="text-gray-600">Nothing yet</div>}
+            </div>
+            <div>
+              <div className="mb-1 font-medium text-rose-300">What's hurting</div>
+              {score.riskFactors.length ? score.riskFactors.map((f: any, i: number) => (
+                <div key={i} className="flex justify-between text-gray-400"><span>{f.label}</span><span className="tabular-nums text-rose-300">+{f.weight}</span></div>
+              )) : <div className="text-gray-600">No risk factors</div>}
+            </div>
+          </div>
+        </Card>
+      )}
 
       <div className="grid gap-5 lg:grid-cols-3">
         {/* Editable deal fields */}

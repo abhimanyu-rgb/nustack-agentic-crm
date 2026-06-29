@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
+import { scoreDeal } from "@/lib/dealScore";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +20,23 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   if (!deal || deal.workspaceId !== user.workspaceId) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
-  return NextResponse.json({ deal });
+
+  // Compute explainable scores from current deal state and persist them so
+  // lists / Today / Command stay consistent.
+  const score = scoreDeal({
+    stage: deal.stage,
+    amount: deal.amount,
+    forecastCategory: deal.forecastCategory,
+    closeDate: deal.closeDate,
+    contactsCount: deal.contacts.length,
+    hasEconomicBuyer: deal.contacts.some((c) => c.buyingRole === "ECONOMIC_BUYER"),
+    lastActivityAt: deal.activities[0]?.occurredAt ?? null,
+  });
+  if (score.health !== deal.healthScore || score.risk !== deal.riskScore) {
+    await prisma.deal.update({ where: { id }, data: { healthScore: score.health, riskScore: score.risk } });
+  }
+
+  return NextResponse.json({ deal: { ...deal, healthScore: score.health, riskScore: score.risk }, score });
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
